@@ -1,0 +1,25 @@
+This is the (somewhat arbitrary) starting point for my first version control tryout with FDTD.
+I have decided to first partition my versions by their dimensionality (i.e., I will have separate 1D, 2D,
+and 3D branches).
+
+As a result, I have created three codes to be put into the master branch
+Basic_1D_Inactual
+Basic_2D
+Basic_3D_Inactual
+
+My Plan for These Codes:
+Currently, all three codes have the same dimensionality -- 2D. This is the reason for the _Inactual labels;
+they indicate that the codes do not currently have the characteristics designated by their other title-info.
+Because I am not starting with 1D and 3D codes, I will have to create 1D and 3D codes from their _Inactual
+counterparts, for which I will make branches. Once the codes are in their intended forms, I will pull them
+back to master, then create a commit where their names are changed and the _Inactual codes are deleted.
+
+Since all three codes have the same content (only their names differ), to describe one is to describe all.
+Characteristics of Basic_2D:
+
+Field Domain: Transverse Electric(Ex,Ey,Hz)
+Boundary Conditions: Periodic in Y, Reflecting in X
+Source: Electric Pulse
+ABC: None
+Scattering: None
+Output: Grid-Return
