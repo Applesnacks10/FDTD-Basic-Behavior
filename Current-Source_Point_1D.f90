@@ -10,10 +10,10 @@ double precision, parameter :: ev_to_radsec=2.0*pi*2.4180e14
 !
 !~~~ number of grid points & time steps ~~~!
 !
-integer, parameter :: Nt= 5000
+integer, parameter :: Nt= 1000
 
-integer, parameter :: Ny=101,N_loc=Ny-1 !N_loc must equal Ny-1 for 1 proc
-double precision, parameter :: y0=-50E-9,yM=50E-9
+integer, parameter :: Ny=501,N_loc=Ny-1 !N_loc must equal Ny-1 for 1 proc
+double precision, parameter :: y0=-250E-9,yM=250E-9
 
 !
 !~~~ Spatial and Temporal steps; Spatial Indexing ~~~!
@@ -27,13 +27,15 @@ double precision y(N_loc),yM2(N_loc)
 !
 double precision, parameter :: eps_delectric=1.0
 double precision, parameter :: dt_eps0=dt/eps0,dt_mu0=dt/mu0
-!double precision !Insert den_ here -- Note: replaced den_ with 1/d_
 
 !
 !~~~ EM field components; Field Input ~~~!
 !
 double precision Ex(N_loc),Hz(N_loc)
 double precision Ex_inc(N_loc),Hz_inc(N_loc)
+integer, parameter :: js = N_loc/2 !Place in the midpoint in order to confirm dual-propagation
+double precision, parameter :: tau = 100*dt/dy !Period for source-wave
+double precision Jx(Nt)
 
 !
 !~~~ Loop Indices; time ~~~!
@@ -95,11 +97,11 @@ enddo
 ! j_return1 = 1
 ! j_return2 = N_loc 
 
- n_return(1) = 10
- n_return(2) = 20
- n_return(3) = 30
-! n_return(4) = 40
-! n_return(5) = 50
+ n_return(1) = 50
+ n_return(2) = 100
+ n_return(3) = 200
+ n_return(4) = 400
+ n_return(5) = 800
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!
    !~~~ Initialize to Zero ~~~!
@@ -111,10 +113,15 @@ Hz=0.0
 Ex_inc=0.0
 Hz_inc=0.0
 
-!pulse = 0.0
+Jx = 0.0
 
-!~~~ Pulse ~~~!  Empty -- No Pulse
-
+!~~~ Source ~~~!
+do n=1,Nt
+ t = dt*(n-1)
+ if(t <= tau)then
+  Jx(n) = dy/dt_eps0*cos(2*pi/tau*t)
+ endif
+enddo
 
 do n=1,Nt
 !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
@@ -139,7 +146,7 @@ enddo
 !~~~ total ~~~!  
 do j=2,N_loc
  
- Ex(j)=Ex(j)+dt_eps0*(Hz(j)-Hz(j-1))/dy
+ Ex(j)=Ex(j)+dt_eps0*(Hz(j)-Hz(j-1) - Jx(n))/dy
   
 enddo
 
@@ -156,7 +163,8 @@ if(Nreturn > 0.and.GR)then
   if(n == n_return(a))then
    
    write(str_n,*) n
-   filename = prefix//str_Ex//trim(adjustl(str_n))//suffix
+   filename = str_Ex//trim(adjustl(str_n))//suffix
+!   filename = prefix//filename
    open(file=trim(adjustl(filename)),position = 'append',unit=a+10)
     do j = j_return1,j_return2
      write(a+10,*) Ex(j)
