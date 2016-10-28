@@ -47,7 +47,7 @@ double precision t
 !~~~ Grid Return ~~~!
 !
 double precision, parameter:: y_return1 = y0, y_return2 = yM
-integer, parameter :: Nreturn = 3
+integer, parameter :: Nreturn = 5
 integer n_return(Nreturn)
 integer j_return1, j_return2
 logical GR
