@@ -146,7 +146,10 @@ enddo
 !~~~ total ~~~!  
 do j=2,N_loc
  
- Ex(j)=Ex(j)+dt_eps0*(Hz(j)-Hz(j-1) - Jx(n))/dy
+ Ex(j)=Ex(j)+dt_eps0*(Hz(j)-Hz(j-1))/dy
+ if(j == js)then !add current source
+  Ex(j) = Ex(j) - dt_eps0/dy*(Jx(n))
+ endif
   
 enddo
 
