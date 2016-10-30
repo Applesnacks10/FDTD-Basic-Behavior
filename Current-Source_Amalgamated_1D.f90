@@ -122,9 +122,9 @@ Jx = 0.0
 
 !~~~ Source ~~~!
 do n=1,Nt
- t = dt*dble(n)
+ t = dt*n
  if(t <= tau)then
-  Jx(n)=-dy/dt_eps0*E0*cos(omega*t)*( &
+  Jx(n)= -E0*cos(omega*t)*( &
                   aBH(1)+ &
 		  aBH(2)*cos(2.0*pi*t/tau)+ &
 		  aBH(3)*cos(2.0*pi*2.0*t/tau)+ &
@@ -157,7 +157,7 @@ do j=2,N_loc
  
  Ex(j)=Ex(j)+dt_eps0*(Hz(j)-Hz(j-1))/dy
  if(j == js)then !add current source
-  Ex(j) = Ex(j) - dt_eps0/dy*(Jx(n))
+  Ex(j) = Ex(j) - Jx(n)
  endif
   
 enddo
