@@ -34,7 +34,7 @@ double precision, parameter :: dt_eps0=dt/eps0,dt_mu0=dt/mu0
 double precision Ex(N_loc),Hz(N_loc)
 double precision Ex_inc(N_loc),Hz_inc(N_loc)
 integer, parameter :: js = N_loc/2 !Place in the midpoint in order to confirm dual-propagation
-double precision, parameter :: tau = 100*dt/dy !Period for source-wave
+double precision, parameter :: tau = 100*dt !Period for source-wave
 double precision Jx(Nt)
 
 !
@@ -119,7 +119,7 @@ Jx = 0.0
 do n=1,Nt
  t = dt*(n-1)
  if(t <= tau)then
-  Jx(n) = dy/dt_eps0*cos(2*pi/tau*t)
+  Jx(n) = dy/dt_eps0*sin(2*pi/tau*t)
  endif
 enddo
 
