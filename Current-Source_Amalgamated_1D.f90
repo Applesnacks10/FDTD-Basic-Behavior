@@ -121,10 +121,16 @@ Hz_inc=0.0
 Jx = 0.0
 
 !~~~ Source ~~~!
+
+aBH(1)=0.353222222
+aBH(2)=-0.488
+aBH(3)=0.145
+aBH(4)=-0.010222222
+
 do n=1,Nt
  t = dt*n
  if(t <= tau)then
-  Jx(n)= -E0*cos(omega*t)*( &
+  Jx(n)= -dy/dt_eps0*E0*cos(omega*t)*( &
                   aBH(1)+ &
 		  aBH(2)*cos(2.0*pi*t/tau)+ &
 		  aBH(3)*cos(2.0*pi*2.0*t/tau)+ &
@@ -157,7 +163,7 @@ do j=2,N_loc
  
  Ex(j)=Ex(j)+dt_eps0*(Hz(j)-Hz(j-1))/dy
  if(j == js)then !add current source
-  Ex(j) = Ex(j) - Jx(n)
+  Ex(j) = Ex(j) - dt_eps0/dy*Jx(n)
  endif
   
 enddo
