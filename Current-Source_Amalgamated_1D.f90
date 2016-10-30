@@ -10,10 +10,10 @@ double precision, parameter :: ev_to_radsec=2.0*pi*2.4180e14
 !
 !~~~ number of grid points & time steps ~~~!
 !
-integer, parameter :: Nt= 1000
+integer, parameter :: Nt= 2000
 
-integer, parameter :: Ny=501,N_loc=Ny-1 !N_loc must equal Ny-1 for 1 proc
-double precision, parameter :: y0=-250E-9,yM=250E-9
+integer, parameter :: Ny=1001,N_loc=Ny-1 !N_loc must equal Ny-1 for 1 proc
+double precision, parameter :: y0=-500E-9,yM=500E-9
 
 !
 !~~~ Spatial and Temporal steps; Spatial Indexing ~~~!
@@ -102,11 +102,11 @@ enddo
 ! j_return1 = 1
 ! j_return2 = N_loc 
 
- n_return(1) = 50
- n_return(2) = 100
- n_return(3) = 200
- n_return(4) = 400
- n_return(5) = 800
+ n_return(1) = 108
+ n_return(2) = 216
+ n_return(3) = 432
+ n_return(4) = 864
+ n_return(5) = 1728
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!
    !~~~ Initialize to Zero ~~~!
