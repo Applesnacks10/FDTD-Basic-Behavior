@@ -29,12 +29,17 @@ double precision, parameter :: eps_delectric=1.0
 double precision, parameter :: dt_eps0=dt/eps0,dt_mu0=dt/mu0
 
 !
-!~~~ EM field components; Field Input ~~~!
+!~~~ EM field components ~~~!
 !
 double precision Ex(N_loc),Hz(N_loc)
 double precision Ex_inc(N_loc),Hz_inc(N_loc)
+
+!
+!~~~ Field Input ~~~!
+!
 integer, parameter :: js = N_loc/2 !Place in the midpoint in order to confirm dual-propagation
-double precision, parameter :: tau = 100*dt !Period for source-wave
+double precision, parameter :: tau=0.36d-15,E0=1.0,omega=ev_to_radsec*3.0
+double precision aBH(4)
 double precision Jx(Nt)
 
 !
@@ -117,9 +122,13 @@ Jx = 0.0
 
 !~~~ Source ~~~!
 do n=1,Nt
- t = dt*(n-1)
+ t = dt*dble(n)
  if(t <= tau)then
-  Jx(n) = dy/dt_eps0*sin(2*pi/tau*t)
+  Jx(n)=-dy/dt_eps0*E0*cos(omega*t)*( &
+                  aBH(1)+ &
+		  aBH(2)*cos(2.0*pi*t/tau)+ &
+		  aBH(3)*cos(2.0*pi*2.0*t/tau)+ &
+		  aBH(4)*cos(2.0*pi*3.0*t/tau))
  endif
 enddo
 
