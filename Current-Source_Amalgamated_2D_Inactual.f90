@@ -10,14 +10,14 @@ double precision, parameter :: ev_to_radsec=2.0*pi*2.4180e14
 !
 !~~~ number of grid points & time steps ~~~!
 !
-integer, parameter :: Nt= 5000
+integer, parameter :: Nt= 2000
 
 
-integer, parameter :: Ny=101,N_loc=Ny-1 !N_loc must equal Ny-1 for 1 proc
-double precision, parameter :: y0=-50E-9,yM=50E-9
+integer, parameter :: Ny=261,N_loc=Ny-1 !N_loc must equal Ny-1 for 1 proc
+double precision, parameter :: y0=-120E-9,yM=120E-9
 
-integer, parameter :: Nx=101
-double precision, parameter :: x0=-50E-9,xM=50E-9
+integer, parameter :: Nx=261
+double precision, parameter :: x0=-120E-9,xM=120E-9
 
 !
 !~~~ Spatial and Temporal steps; Spatial Indexing ~~~!
@@ -34,14 +34,18 @@ double precision, parameter :: dt_eps0=dt/eps0,dt_mu0=dt/mu0
 !double precision !Insert den_ here -- Note: replaced den_ with 1/d_
 
 !
-!~~~ EM field components; Field Input ~~~!
+!~~~ EM field components ~~~!
 !
 double precision Ex(Nx-1,N_loc),Ey(Nx,N_loc),Hz(Nx-1,N_loc)
 double precision Ex_inc(N_loc),Hz_inc(N_loc)
-double precision pulse(Nt)
+
+!
+!~~~ Field Input ~~~!
+!
+integer, parameter :: js = N_loc/2, is = (Nx-1)/2
 double precision aBH(4)
-double precision, parameter :: tau=0.12d-15,E0=1.0,omega=ev_to_radsec*3.0
-integer, parameter :: js = -1, is = -1 ! No pulse
+double precision, parameter :: tau=0.36d-15,E0=1.0,omega=ev_to_radsec*3.0
+double precision Jx(Nt),Jy(Nt)
 
 !
 !~~~ Loop Indices; time ~~~!
@@ -52,8 +56,8 @@ double precision t
 !
 !~~~ Grid Return ~~~!
 !
-double precision, parameter:: y_return1 = y0, y_return2 = yM, x_return1 = x0, x_return2 = xM!-1E-9
-integer, parameter :: Nreturn = 5           !xM or xM-1E-9, depending on x-size of field array.
+double precision, parameter:: y_return1 = y0, y_return2 = yM, x_return1 = x0, x_return2 = xM-dx
+integer, parameter :: Nreturn = 5
 integer n_return(Nreturn)
 integer i_return1, i_return2, j_return1, j_return2
 logical GR
@@ -122,14 +126,12 @@ enddo
 ! j_return2 = N_loc
 ! i_return1 = 1
 ! i_return2 = Nx-1 
-! itag6 = N_loc+2
-! requisite_send = 1
-! requisite_recv = 0
- n_return(1) = 200*2
- n_return(2) = 400*2
- n_return(3) = 800*2
- n_return(4) = 1200*2
- n_return(5) = 1600*2
+
+ n_return(1) = 108
+ n_return(2) = 216
+ n_return(3) = 432
+ n_return(4) = 864
+ n_return(5) = 1728
 
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!
@@ -143,28 +145,11 @@ Hz=0.0
 Ex_inc=0.0
 Hz_inc=0.0
 
-pulse = 0.0
+Jx = 0.0
+Jy = 0.0
 
-!   filename = 'Snapshot-Ex8.dat'
-!   open(file=filename,position = 'append',unit=a+10)
-!    do j = j_return1,j_return2
-!     write(a+10,*) Ex(i_return1:i_return2,j)
-!    enddo
-!   close(unit=a+10)
-  
-!    open(file='Return_Grid_y.dat',position = 'append',unit=90)
-!     do j = j_return1,j_return2
-!      write(90,*) (y(j), i = i_return1,i_return2)
-!     enddo
-!    close(unit=90)
-!   
-!    open(file='Return_Grid_x.dat',position = 'append',unit=91)
-!     do j = j_return1,j_return2
-!       write(91,*) (x(i), i = i_return1,i_return2) 
-!     enddo
-!    close(unit=91)
 
-!~~~ Pulse ~~~!
+!~~~ Source ~~~!
 
 aBH(1)=0.353222222
 aBH(2)=-0.488
@@ -174,15 +159,14 @@ aBH(4)=-0.010222222
 do n=1,Nt
  t=dt*dble(n)
  if(t<=tau)then
-   pulse(n)=E0*cos(omega*t)*( &
-                 aBH(1)+ &
-				 aBH(2)*cos(2.0*pi*t/tau)+ &
-				 aBH(3)*cos(2.0*pi*2.0*t/tau)+ &
-				 aBH(4)*cos(2.0*pi*3.0*t/tau))
-  else
-   pulse(n)=0.0
+  Jx(n)= -dy/dt_eps0*E0*cos(omega*t)*( &
+                  aBH(1)+ &
+		  aBH(2)*cos(2.0*pi*t/tau)+ &
+		  aBH(3)*cos(2.0*pi*2.0*t/tau)+ &
+		  aBH(4)*cos(2.0*pi*3.0*t/tau))
  endif
 enddo
+Jy(n) = Jx(n)*dx/dy
 
 do n=1,Nt
 !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
@@ -211,8 +195,8 @@ do i=1,Nx-1
  do j=2,N_loc
  
   Ex(i,j)=Ex(i,j)+dt_eps0*(Hz(i,j)-Hz(i,j-1))/dy
-  if(j == js)then !js = -1
-   Ex(i,j) = Ex(i,j) + pulse(n)
+  if(j == js)then !add current source
+   Ex(j) = Ex(j) - dt_eps0/dy*Jx(n)
   endif
   
  enddo
@@ -227,7 +211,7 @@ enddo
 i=1
 do j=1,N_loc
  
- Ey(i,j)=Ey(i,j)+dt_eps0*(Hz(Nx-1,j)-Hz(i,j))/dx !Is this the periodic BC??
+ Ey(i,j)=Ey(i,j)+dt_eps0*(Hz(Nx-1,j)-Hz(i,j))/dx
 
 enddo
  
@@ -235,8 +219,8 @@ do i=2,Nx-1
  do j=1,N_loc
   
   Ey(i,j)=Ey(i,j)+dt_eps0*(Hz(i-1,j)-Hz(i,j))/dx
-  if(i == is.and.j=/N_loc)then ! laser pulse. At N_loc, Hz is not updated.
-   Ey(i,j) = Ey(i,j) + pulse(n)
+  if(i == is.and.j=/N_loc)then
+   Ey(i,j) = Ey(i,j) - dt_eps0/dx*Jy(n)
   endif
  
  enddo
@@ -245,13 +229,9 @@ enddo
 i=Nx
 do j=1,N_loc
  
- Ey(i,j)=Ey(i,j)+dt_eps0*(Hz(i-1,j)-Hz(1,j))/dx !Nx is the Correspondent to i = 1
+ Ey(i,j)=Ey(i,j)+dt_eps0*(Hz(i-1,j)-Hz(1,j))/dx 
 
 enddo
-
-! Ey(1) = Ey(Nx). i = 1 and i = Nx are interchangable 
-! (picture a grid wrapped into a cylinder, where the endpoints become coincident)
-! ((the coincidence of the endpoints is an analog to the reciprocity of index)) 
 
 
 !--------------------------------------------------------------------------!
@@ -267,12 +247,23 @@ if(Nreturn > 0.and.GR)then
   if(n == n_return(a))then
    
    write(str_n,*) n
-   filename = prefix//str_Ey//trim(adjustl(str_n))//suffix
+   filename = str_Ey//trim(adjustl(str_n))//suffix
+   !filename = prefix//filename
    open(file=trim(adjustl(filename)),position = 'append',unit=a+10)
     do j = j_return1,j_return2
      write(a+10,*) Ey(i_return1:i_return2,j)
     enddo
    close(unit=a+10)
+  
+   
+   write(str_n,*) n
+   filename = str_Ex//trim(adjustl(str_n))//suffix
+   !filename = prefix//filename
+   open(file=trim(adjustl(filename)),position = 'append',unit=a+20)
+    do j = j_return1,j_return2
+     write(a+20,*) Ex(i_return1:i_return2,j)
+    enddo
+   close(unit=a+20)
   
 !   if(a == 1)then 
 !    open(file='Return_Grid_y0.dat',position = 'append',unit=90)
