@@ -196,7 +196,7 @@ do i=1,Nx-1
  
   Ex(i,j)=Ex(i,j)+dt_eps0*(Hz(i,j)-Hz(i,j-1))/dy
   if(j == js)then !add current source
-   Ex(j) = Ex(j) - dt_eps0/dy*Jx(n)
+   Ex(i,j) = Ex(i,j) - dt_eps0/dy*Jx(n)
   endif
   
  enddo
@@ -219,7 +219,7 @@ do i=2,Nx-1
  do j=1,N_loc
   
   Ey(i,j)=Ey(i,j)+dt_eps0*(Hz(i-1,j)-Hz(i,j))/dx
-  if(i == is.and.j=/N_loc)then
+  if(i == is.and.j/=N_loc)then
    Ey(i,j) = Ey(i,j) - dt_eps0/dx*Jy(n)
   endif
  
