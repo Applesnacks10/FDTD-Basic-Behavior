@@ -1,0 +1,12 @@
+Codes in this branch will adhere to the method of adapting CPML to dispersive media as suggested by Taflove in
+Computational Electrodynamics: The Finite-DIfference Time-Domain Method, 3rd ed., Section 7.10, pg 310.
+The medium of choice will be the Drude-Dispersive medium of the single-slit code, which will permeate the
+entire grid, including the CPML-laden boundaries.
+
+CPML_Drude_2D
+
+Boundary Conditions: Reflecting in Y, Periodic in X
+Source: Current Source - Amalgamated Plane Wave
+ABC: CPML adapted to Drude Dispersion, as detailed in Taflove 3rd ed. Section 7.10, pg 310
+Scattering: Drude-Disperion throughout (no vacuum)
+Output: Grid-Return
