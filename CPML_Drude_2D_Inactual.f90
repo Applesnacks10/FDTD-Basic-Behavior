@@ -48,6 +48,17 @@ double precision, parameter :: tau=0.36d-15,E0=1.0,omega=ev_to_radsec*3.0
 double precision Jx(Nt),Jy(Nt)
 
 !
+!~~~ Drude model for Ag; Scaterring Variables ~~~!
+!
+double precision, parameter :: eps_r=8.926,omegaD=ev_to_radsec*11.585,GammaD=ev_to_radsec*0.203
+double precision, parameter :: A1=(2.0-GammaD*dt)/(2.0+GammaD*dt),A2=eps0*omegaD*omegaD*dt/(2.0+GammaD*dt)
+double precision, parameter :: C1=(eps_r*eps0/dt-0.5*A2)/(eps_r*eps0/dt+0.5*A2)
+double precision, parameter :: C3=1.0/(eps_r*eps0/dt+0.5*A2)
+double precision, parameter :: C4=0.5*(A1+1.0)/(eps_r*eps0/dt+0.5*A2)
+double precision PDy(Nx,N_loc), PDx(Nx-1,N_loc)
+double precision tmpE
+logical FB
+!
 !~~~ Loop Indices; time ~~~!
 !
 integer i,ii,j,jj,n,nn,k,a,b
@@ -84,6 +95,8 @@ do j=1,N_loc
  y(j)=y0+dy*(j_glob-1)
  yM2(j)=y0+dy*(j_glob-1)+dy/2.0
 enddo
+
+FB = .true. !Scatterer Presence
 
 !~~~ Grid Return ~~~!
 
@@ -193,12 +206,21 @@ enddo
 !~~~ total ~~~! 
 do i=1,Nx-1  
  do j=2,N_loc
- 
-  Ex(i,j)=Ex(i,j)+dt_eps0*(Hz(i,j)-Hz(i,j-1))/dy
-  if(j == js)then !add current source
-   Ex(i,j) = Ex(i,j) - dt_eps0/dy*Jx(n)
-  endif
   
+  if(FB)then !Drude update
+   tmpE=C1*Ex(i,j)+C3*(Hz(i,j)-Hz(i,j-1))/dy-C4*PDx(i,j)
+   if(j == js)
+    tmpE = tmpE - dt_eps0/dy*Jx(n) !add current source BEFORE Drude polarization current update -- the Drude current will be altered.
+   endif
+   PDx(i,j)=A1*PDx(i,j)+A2*(tmpE+Ex(i,j))
+   Ex(i,j)=tmpE
+  else !Vacuum update
+   Ex(i,j)=Ex(i,j)+dt_eps0*(Hz(i,j)-Hz(i,j-1))/dy
+   if(j == js)then !add current source
+    Ex(i,j) = Ex(i,j) - dt_eps0/dy*Jx(n)
+   endif
+  endif
+  o
  enddo
 enddo
 
@@ -211,16 +233,31 @@ enddo
 i=1
 do j=1,N_loc
  
- Ey(i,j)=Ey(i,j)+dt_eps0*(Hz(Nx-1,j)-Hz(i,j))/dx
-
+ if(FB)then !Drude update
+  tmpE=C1*Ey(i,j)+C3*(Hz(Nx-1,j)-Hz(i,j))*den_ex(i)-C4*PDy(i,j)
+  PDy(i,j)=A1*PDy(i,j)+A2*(tmpE+Ey(i,j))
+  Ey(i,j)=tmpE
+ else !Vacuum update
+  Ey(i,j)=Ey(i,j)+dt_eps0*(Hz(Nx-1,j)-Hz(i,j))/dx
+ endif
+ 
 enddo
  
 do i=2,Nx-1
  do j=1,N_loc
   
-  Ey(i,j)=Ey(i,j)+dt_eps0*(Hz(i-1,j)-Hz(i,j))/dx
-  if(i == is.and.j/=N_loc)then
-   Ey(i,j) = Ey(i,j) - dt_eps0/dx*Jy(n)
+  if(FB)then !Drude update
+   tmpE=C1*Ey(i,j)+C3*(Hz(i-1,j)-Hz(i,j))*den_ex(i)-C4*PDy(i,j)
+   if(i == is)then
+    tmpE = tmpE - dt_eps0/dx*Jy(n) !add current source BEFORE Drude current update
+   endif
+   PDy(i,j)=A1*PDy(i,j)+A2*(tmpE+Ey(i,j))
+   Ey(i,j)=tmpE
+  else !Vacuum update
+   Ey(i,j)=Ey(i,j)+dt_eps0*(Hz(i-1,j)-Hz(i,j))/dx
+   if(i == is.and.j/=N_loc)then
+    Ey(i,j) = Ey(i,j) - dt_eps0/dx*Jy(n)
+   endif
   endif
  
  enddo
@@ -229,8 +266,14 @@ enddo
 i=Nx
 do j=1,N_loc
  
- Ey(i,j)=Ey(i,j)+dt_eps0*(Hz(i-1,j)-Hz(1,j))/dx 
-
+ if(FB)then !Drude update
+  tmpE=C1*Ey(i,j)+C3*(Hz(i-1,j)-Hz(1,j))*den_ex(i)-C4*PDy(i,j)
+  PDy(i,j)=A1*PDy(i,j)+A2*(tmpE+Ey(i,j))
+  Ey(i,j)=tmpE
+ else !Vacuum update
+  Ey(i,j)=Ey(i,j)+dt_eps0*(Hz(i-1,j)-Hz(1,j))/dx 
+ endif
+ 
 enddo
 
 
