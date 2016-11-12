@@ -209,7 +209,7 @@ do i=1,Nx-1
   
   if(FB)then !Drude update
    tmpE=C1*Ex(i,j)+C3*(Hz(i,j)-Hz(i,j-1))/dy-C4*PDx(i,j)
-   if(j == js)
+   if(j == js)then
     tmpE = tmpE - dt_eps0/dy*Jx(n) !add current source BEFORE Drude polarization current update -- the Drude current will be altered.
    endif
    PDx(i,j)=A1*PDx(i,j)+A2*(tmpE+Ex(i,j))
@@ -220,7 +220,7 @@ do i=1,Nx-1
     Ex(i,j) = Ex(i,j) - dt_eps0/dy*Jx(n)
    endif
   endif
-  o
+  
  enddo
 enddo
 
@@ -234,7 +234,7 @@ i=1
 do j=1,N_loc
  
  if(FB)then !Drude update
-  tmpE=C1*Ey(i,j)+C3*(Hz(Nx-1,j)-Hz(i,j))*den_ex(i)-C4*PDy(i,j)
+  tmpE=C1*Ey(i,j)+C3*(Hz(Nx-1,j)-Hz(i,j))/dx-C4*PDy(i,j)
   PDy(i,j)=A1*PDy(i,j)+A2*(tmpE+Ey(i,j))
   Ey(i,j)=tmpE
  else !Vacuum update
@@ -247,7 +247,7 @@ do i=2,Nx-1
  do j=1,N_loc
   
   if(FB)then !Drude update
-   tmpE=C1*Ey(i,j)+C3*(Hz(i-1,j)-Hz(i,j))*den_ex(i)-C4*PDy(i,j)
+   tmpE=C1*Ey(i,j)+C3*(Hz(i-1,j)-Hz(i,j))/dx-C4*PDy(i,j)
    if(i == is)then
     tmpE = tmpE - dt_eps0/dx*Jy(n) !add current source BEFORE Drude current update
    endif
@@ -255,7 +255,7 @@ do i=2,Nx-1
    Ey(i,j)=tmpE
   else !Vacuum update
    Ey(i,j)=Ey(i,j)+dt_eps0*(Hz(i-1,j)-Hz(i,j))/dx
-   if(i == is.and.j/=N_loc)then
+   if(i == is.and.j/=N_loc)then !add current source
     Ey(i,j) = Ey(i,j) - dt_eps0/dx*Jy(n)
    endif
   endif
@@ -267,7 +267,7 @@ i=Nx
 do j=1,N_loc
  
  if(FB)then !Drude update
-  tmpE=C1*Ey(i,j)+C3*(Hz(i-1,j)-Hz(1,j))*den_ex(i)-C4*PDy(i,j)
+  tmpE=C1*Ey(i,j)+C3*(Hz(i-1,j)-Hz(1,j))/dx-C4*PDy(i,j)
   PDy(i,j)=A1*PDy(i,j)+A2*(tmpE+Ey(i,j))
   Ey(i,j)=tmpE
  else !Vacuum update
