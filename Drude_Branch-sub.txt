@@ -9,3 +9,8 @@ Source: Current Source - Amalgamated Plane Wave
 ABC: None
 Scattering: Drude-Disperion throughout (no vacuum)
 Output: Grid-Return
+
+First Run 
+Resulted in an upward-creeping wave of Divergence, seemingly emanating from the bottom of the grid.
+May be due to current souce inside Drude material.
+Proposed solution: add a vacuum cavity in which the current source will reside.
