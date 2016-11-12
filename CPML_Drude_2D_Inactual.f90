@@ -14,10 +14,10 @@ integer, parameter :: Nt= 2000
 
 
 integer, parameter :: Ny=261,N_loc=Ny-1 !N_loc must equal Ny-1 for 1 proc
-double precision, parameter :: y0=-120E-9,yM=120E-9
+double precision, parameter :: y0=-130E-9,yM=130E-9
 
 integer, parameter :: Nx=261
-double precision, parameter :: x0=-120E-9,xM=120E-9
+double precision, parameter :: x0=-130E-9,xM=130E-9
 
 !
 !~~~ Spatial and Temporal steps; Spatial Indexing ~~~!
