@@ -10,7 +10,7 @@ double precision, parameter :: ev_to_radsec=2.0*pi*2.4180e14
 !
 !~~~ number of grid points & time steps ~~~!
 !
-integer, parameter :: Nt= 1000
+integer, parameter :: Nt= 100
 
 
 integer, parameter :: Ny=261,N_loc=Ny-1 !N_loc must equal Ny-1 for 1 proc
@@ -42,7 +42,7 @@ double precision Ex_inc(N_loc),Hz_inc(N_loc)
 !
 !~~~ Field Input ~~~!
 !
-integer, parameter :: js = N_loc/2, is = (Nx-1)/2
+integer, parameter :: js = N_loc/2, is = -1
 double precision aBH(4)
 double precision, parameter :: tau=0.36d-15,E0=1.0,omega=ev_to_radsec*3.0
 double precision Jx(Nt),Jy(Nt)
@@ -140,11 +140,11 @@ FB = .true. !Scatterer Presence
 ! i_return1 = 1
 ! i_return2 = Nx-1 
 
- n_return(1) = 400
- n_return(2) = 600
- n_return(3) = 800
- n_return(4) = 900
- n_return(5) = 1000
+ n_return(1) = 1
+ n_return(2) = 2
+ n_return(3) = 3
+ n_return(4) = 4
+ n_return(5) = 5
 
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!
@@ -250,7 +250,7 @@ do i=2,Nx-1
    tmpE=C1*Ey(i,j)+C3*(Hz(i-1,j)-Hz(i,j))/dx-C4*PDy(i,j)
    PDy(i,j)=A1*PDy(i,j)+A2*(tmpE+Ey(i,j))
    Ey(i,j)=tmpE
-   if(i == is)then
+   if(i == is.and.j/=N_loc)then
     Ey(i,j) = Ey(i,j) - dt_eps0/dx*Jy(n) !add current source AFTER Drude current update
    endif
   else !Vacuum update
