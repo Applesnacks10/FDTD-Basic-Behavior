@@ -10,14 +10,14 @@ double precision, parameter :: ev_to_radsec=2.0*pi*2.4180e14
 !
 !~~~ number of grid points & time steps ~~~!
 !
-integer, parameter :: Nt= 2000
+integer, parameter :: Nt= 1000
 
 
 integer, parameter :: Ny=261,N_loc=Ny-1 !N_loc must equal Ny-1 for 1 proc
 double precision, parameter :: y0=-130E-9,yM=130E-9
 
-integer, parameter :: Nx=261
-double precision, parameter :: x0=-130E-9,xM=130E-9
+integer, parameter :: Nx=21
+double precision, parameter :: x0=-10E-9,xM=10E-9
 
 !
 !~~~ Spatial and Temporal steps; Spatial Indexing ~~~!
@@ -140,11 +140,11 @@ FB = .true. !Scatterer Presence
 ! i_return1 = 1
 ! i_return2 = Nx-1 
 
- n_return(1) = 108
- n_return(2) = 216
- n_return(3) = 432
- n_return(4) = 864
- n_return(5) = 1728
+ n_return(1) = 400
+ n_return(2) = 600
+ n_return(3) = 800
+ n_return(4) = 900
+ n_return(5) = 1000
 
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!
