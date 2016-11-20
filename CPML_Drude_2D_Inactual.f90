@@ -108,7 +108,7 @@ enddo
 do i = 1,Nx-1
  do j = 1,N_loc
   if(y(j) >= z1.and.y(j) <= z2)then
-   FBx(i,j) == .true.
+   FBx(i,j) = .true.
   else
    FBx(i,j) = .false.
   endif
@@ -118,7 +118,7 @@ enddo
 do i = 1,Nx-1
  do j = 1,N_loc
   if(yM2(j) >= z1.and.yM2(j) <= z2)then
-   FBy(i,j) == .true.
+   FBy(i,j) = .true.
   else
    FBy(i,j) = .false.
   endif
@@ -235,7 +235,7 @@ enddo
 do i=1,Nx-1  
  do j=2,N_loc
   
-  if(FB)then !Drude update
+  if(FBx(i,j))then !Drude update
    tmpE=C1*Ex(i,j)+C3*(Hz(i,j)-Hz(i,j-1))/dy-C4*PDx(i,j)
    PDx(i,j)=A1*PDx(i,j)+A2*(tmpE+Ex(i,j))
    Ex(i,j)=tmpE
@@ -261,7 +261,7 @@ enddo
 do i=2,Nx-1
  do j=1,N_loc
   
-  if(FB)then !Drude update
+  if(FBy(i,j))then !Drude update
    tmpE=C1*Ey(i,j)+C3*(Hz(i-1,j)-Hz(i,j))/dx-C4*PDy(i,j)
    PDy(i,j)=A1*PDy(i,j)+A2*(tmpE+Ey(i,j))
    Ey(i,j)=tmpE
