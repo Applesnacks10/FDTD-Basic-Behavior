@@ -115,7 +115,7 @@ do i = 1,Nx-1
  enddo
 enddo
 
-do i = 1,Nx-1
+do i = 1,Nx
  do j = 1,N_loc
   if(yM2(j) >= z1.and.yM2(j) <= z2)then
    FBy(i,j) = .true.
