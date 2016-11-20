@@ -10,14 +10,14 @@ double precision, parameter :: ev_to_radsec=2.0*pi*2.4180e14
 !
 !~~~ number of grid points & time steps ~~~!
 !
-integer, parameter :: Nt= 100
+integer, parameter :: Nt= 500
 
 
-integer, parameter :: Ny=261,N_loc=Ny-1 !N_loc must equal Ny-1 for 1 proc
-double precision, parameter :: y0=-130E-9,yM=130E-9
+integer, parameter :: Ny=11,N_loc=Ny-1 !N_loc must equal Ny-1 for 1 proc
+double precision, parameter :: y0=-5E-9,yM=5E-9
 
-integer, parameter :: Nx=21
-double precision, parameter :: x0=-10E-9,xM=10E-9
+integer, parameter :: Nx=11
+double precision, parameter :: x0=-5E-9,xM=5E-9
 
 !
 !~~~ Spatial and Temporal steps; Spatial Indexing ~~~!
@@ -140,11 +140,11 @@ FB = .true. !Scatterer Presence
 ! i_return1 = 1
 ! i_return2 = Nx-1 
 
- n_return(1) = 1
- n_return(2) = 2
- n_return(3) = 3
- n_return(4) = 4
- n_return(5) = 5
+ n_return(1) = 100
+ n_return(2) = 200
+ n_return(3) = 300
+ n_return(4) = 400
+ n_return(5) = 500
 
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!
@@ -177,9 +177,9 @@ do n=1,Nt
 		  aBH(2)*cos(2.0*pi*t/tau)+ &
 		  aBH(3)*cos(2.0*pi*2.0*t/tau)+ &
 		  aBH(4)*cos(2.0*pi*3.0*t/tau))
+  Jy(n) = Jx(n)*dx/dy
  endif
 enddo
-Jy = Jx*dx/dy
 
 do n=1,Nt
 !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
@@ -229,17 +229,6 @@ enddo
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Ey ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!
 !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
 !::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
-
-i=1
-do j=1,N_loc
- 
- if(FB)then !Drude update
-  tmpE=C1*Ey(i,j)+C3*(Hz(Nx-1,j)-Hz(i,j))/dx-C4*PDy(i,j)
-  PDy(i,j)=A1*PDy(i,j)+A2*(tmpE+Ey(i,j))
-  Ey(i,j)=tmpE
- else !Vacuum update
-  Ey(i,j)=Ey(i,j)+dt_eps0*(Hz(Nx-1,j)-Hz(i,j))/dx
- endif
  
 enddo
  
@@ -262,17 +251,6 @@ do i=2,Nx-1
  
  enddo
 enddo
-
-i=Nx
-do j=1,N_loc
- 
- if(FB)then !Drude update
-  tmpE=C1*Ey(i,j)+C3*(Hz(i-1,j)-Hz(1,j))/dx-C4*PDy(i,j)
-  PDy(i,j)=A1*PDy(i,j)+A2*(tmpE+Ey(i,j))
-  Ey(i,j)=tmpE
- else !Vacuum update
-  Ey(i,j)=Ey(i,j)+dt_eps0*(Hz(i-1,j)-Hz(1,j))/dx 
- endif
  
 enddo
 
