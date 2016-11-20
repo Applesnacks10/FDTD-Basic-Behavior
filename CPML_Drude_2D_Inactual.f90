@@ -10,11 +10,11 @@ double precision, parameter :: ev_to_radsec=2.0*pi*2.4180e14
 !
 !~~~ number of grid points & time steps ~~~!
 !
-integer, parameter :: Nt= 500
+integer, parameter :: Nt= 1000
 
 
-integer, parameter :: Ny=11,N_loc=Ny-1 !N_loc must equal Ny-1 for 1 proc
-double precision, parameter :: y0=-5E-9,yM=5E-9
+integer, parameter :: Ny=201,N_loc=Ny-1 !N_loc must equal Ny-1 for 1 proc
+double precision, parameter :: y0=-100E-9,yM=100E-9
 
 integer, parameter :: Nx=11
 double precision, parameter :: x0=-5E-9,xM=5E-9
@@ -48,7 +48,7 @@ double precision, parameter :: tau=0.36d-15,E0=1.0,omega=ev_to_radsec*3.0
 double precision Jx(Nt),Jy(Nt)
 
 !
-!~~~ Drude model for Ag; Scaterring Variables ~~~!
+!~~~ Drude model for Ag ~~~!
 !
 double precision, parameter :: eps_r=8.926,omegaD=ev_to_radsec*11.585,GammaD=ev_to_radsec*0.203
 double precision, parameter :: A1=(2.0-GammaD*dt)/(2.0+GammaD*dt),A2=eps0*omegaD*omegaD*dt/(2.0+GammaD*dt)
@@ -57,7 +57,14 @@ double precision, parameter :: C3=1.0/(eps_r*eps0/dt+0.5*A2)
 double precision, parameter :: C4=0.5*(A1+1.0)/(eps_r*eps0/dt+0.5*A2)
 double precision PDy(Nx,N_loc), PDx(Nx-1,N_loc)
 double precision tmpE
-logical FB
+
+!
+!~~~ Scattering Presence ~~~!
+!
+
+logical :: FBx(Nx-1,N_loc), FBy(Nx,N_loc)
+double precision, parameter :: z1 = -5*dy, z2 = 5*dy
+
 !
 !~~~ Loop Indices; time ~~~!
 !
@@ -96,7 +103,28 @@ do j=1,N_loc
  yM2(j)=y0+dy*(j_glob-1)+dy/2.0
 enddo
 
-FB = .true. !Scatterer Presence
+!~~~ Scatterer Presence ~~~!
+
+do i = 1,Nx-1
+ do j = 1,N_loc
+  if(y(j) >= z1.and.y(j) <= z2)then
+   FBx(i,j) == .true.
+  else
+   FBx(i,j) = .false.
+  endif
+ enddo
+enddo
+
+do i = 1,Nx-1
+ do j = 1,N_loc
+  if(yM2(j) >= z1.and.yM2(j) <= z2)then
+   FBy(i,j) == .true.
+  else
+   FBy(i,j) = .false.
+  endif
+ enddo
+enddo
+
 
 !~~~ Grid Return ~~~!
 
@@ -140,11 +168,11 @@ FB = .true. !Scatterer Presence
 ! i_return1 = 1
 ! i_return2 = Nx-1 
 
- n_return(1) = 100
- n_return(2) = 200
- n_return(3) = 300
- n_return(4) = 400
- n_return(5) = 500
+ n_return(1) = 100*2
+ n_return(2) = 200*2
+ n_return(3) = 300*2
+ n_return(4) = 400*2
+ n_return(5) = 500*2
 
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!
