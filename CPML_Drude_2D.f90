@@ -426,7 +426,7 @@ do i=1,Nx-1
  do j=2,N_loc
   
   if(FBx(i,j))then !Drude update
-   tmpE=C1(j)*Ex(i,j)+C2(j)*(Hz(i,j)-Hz(i,j-1))/dy-C3(j)*PDx(i,j)
+   tmpE=C1_ex(j)*Ex(i,j)+C2_ex(j)*(Hz(i,j)-Hz(i,j-1))/dy-C3_ex(j)*PDx(i,j)
    PDx(i,j)=A1*PDx(i,j)+A2*(tmpE+Ex(i,j))
    Ex(i,j)=tmpE
   if(j == js)then
@@ -471,7 +471,7 @@ do i=2,Nx-1
  do j=1,N_loc
   
   if(FBy(i,j))then !Drude update
-   tmpE=C1(i)*Ey(i,j)+C2(i)*(Hz(i-1,j)-Hz(i,j))/dx-C3(i)*PDy(i,j)
+   tmpE=C1_ey(i)*Ey(i,j)+C2_ey(i)*(Hz(i-1,j)-Hz(i,j))/dx-C3_ey(i)*PDy(i,j)
    PDy(i,j)=A1*PDy(i,j)+A2*(tmpE+Ey(i,j))
    Ey(i,j)=tmpE
    if(i == is.and.j/=N_loc)then
