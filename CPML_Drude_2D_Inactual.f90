@@ -249,38 +249,26 @@ do j=1,npml-1
 enddo
 
 den_hy=1.0/dy
-if(myrank==0)then
-  do j=1,N_loc
-   if(j<=(npml-1))then
-    den_hy(j)=1.0/(kappah_y(j)*dy)
-   endif
-  enddo
- elseif(myrank==(nprocs-1))then
-  jj=npml-1
-  do j=1,(N_loc-1)
-   if(j>=(N_loc+1-npml))then
-     den_hy(j)=1.0/(kappah_y(jj)*dy)
-     jj=jj-1
-   endif
-  enddo
-endif
+jj=npml-1
+do j=1,N_loc
+ if(j<=(npml-1))then
+  den_hy(j)=1.0/(kappah_y(j)*dy)
+ elseif(j >= (N_loc-(npml-1)))then
+  den_hy(j)=1.0/(kappah_y(jj)*dy)
+  jj=jj-1
+ endif
+enddo
 
 den_ey=1.0/dy
-if(myrank==0)then
-  do j=1,N_loc
-   if(j<=npml)then
-    den_ey(j)=1.0/(kappae_y(j)*dy)
-   endif
-  enddo
- elseif(myrank==(nprocs-1))then
-  jj=npml
-  do j=1,(N_loc-1)
-   if(j>=(N_loc+1-npml))then
-     den_ey(j)=1.0/(kappae_y(jj)*dy)
-     jj=jj-1
-   endif
-  enddo
-endif
+jj=npml
+do j=1,N_loc
+ if(j<=npml)then
+  den_ey(j)=1.0/(kappae_y(j)*dy)
+ elseif(j >= (N_loc-(npml-1)))then
+  den_ey(j)=1.0/(kappae_y(jj)*dy)
+  jj=jj-1
+ endif
+enddo
 
 ii=npml-1
 do i=1,Nx-1
@@ -352,14 +340,14 @@ do n=1,Nt
 do i=1,Nx-1
  do j=1,N_loc-1
  
-  Hz(i,j)=Hz(i,j)+dt_mu0*((Ey(i,j)-Ey(i+1,j))/dx + &
-			               (Ex(i,j+1)-Ex(i,j))/dy)
+  Hz(i,j)=Hz(i,j)+dt_mu0*((Ey(i,j)-Ey(i+1,j))*den_hx(i) + &
+			               (Ex(i,j+1)-Ex(i,j))*den_hy(j))
   
  enddo
 enddo
 
 			              
-do j=1,N_loc
+do j=1,N_loc-1
 !  PML for left Hz, x-direction
  do i=1,npml-1
   psi_Hzx_1(i,j)=bh_x(i)*psi_Hzx_1(i,j)+ch_x(i)*(Ey(i,j)-Ey(i+1,j))/dx
@@ -466,12 +454,12 @@ do i=2,Nx-1
 enddo
 
 do j=1,N_loc
-!  PML for bottom Ey, x-direction
+!  PML for left Ey, x-direction
  do i=2,npml
   psi_Eyx_1(i,j)=be_x(i)*psi_Eyx_1(i,j)+ce_x(i)*(Hz(i-1,j)-Hz(i,j))/dx
   Ey(i,j)=Ey(i,j)+dt_eps0*psi_Eyx_1(i,j)
  enddo
-!  PML for top Ey, x-direction
+!  PML for right Ey, x-direction
  ii=npml
  do i=Nx+1-npml,Nx-1
   psi_Eyx_2(ii,j)=be_x(ii)*psi_Eyx_2(ii,j)+ce_x(ii)*(Hz(i-1,j)-Hz(i,j))/dx
