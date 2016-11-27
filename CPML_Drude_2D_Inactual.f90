@@ -51,9 +51,11 @@ double precision Jx(Nt),Jy(Nt)
 !
 double precision, parameter :: eps_r=8.926,omegaD=ev_to_radsec*11.585,GammaD=ev_to_radsec*0.203
 double precision, parameter :: A1=(2.0-GammaD*dt)/(2.0+GammaD*dt),A2=eps0*omegaD*omegaD*dt/(2.0+GammaD*dt)
-double precision, parameter :: C1=(eps_r*eps0/dt-0.5*A2)/(eps_r*eps0/dt+0.5*A2)
-double precision, parameter :: C3=1.0/(eps_r*eps0/dt+0.5*A2)
-double precision, parameter :: C4=0.5*(A1+1.0)/(eps_r*eps0/dt+0.5*A2)
+double precision :: C1_ex(N_loc), C2_ex(N_loc), C3_ex(N_loc)
+double precision :: C1_ey(Nx-1), C2_ey(Nx-1), C3_ey(Nx-1)
+!double precision, parameter :: C1=(eps_r*eps0/dt-0.5*A2)/(eps_r*eps0/dt+0.5*A2)
+!double precision, parameter :: C3=1.0/(eps_r*eps0/dt+0.5*A2)
+!double precision, parameter :: C4=0.5*(A1+1.0)/(eps_r*eps0/dt+0.5*A2)
 double precision PDy(Nx,N_loc), PDx(Nx-1,N_loc)
 double precision tmpE
 
@@ -264,33 +266,53 @@ jj=npml
 do j=1,N_loc
  if(j<=npml)then
   den_ey(j)=1.0/(kappae_y(j)*dy)
+  C1_ex(j) = (eps_r*eps0/dt-0.5*sige_y(j)-0.5*A2)/(eps_r*eps0/dt+0.5*sige_y(j)+0.5*A2)
+  C2_ex(j) = 1.0/(eps_r*eps0/dt+0.5*sige_y(j)+0.5*A2)
+  C3_ex(j) = 0.5*(A1+1.0)/(eps_r*eps0/dt+0.5*sige_y(j)+0.5*A2)
  elseif(j >= (N_loc-(npml-1)))then
   den_ey(j)=1.0/(kappae_y(jj)*dy)
+  C1_ex(j) = (eps_r*eps0/dt-0.5*sige_y(jj)-0.5*A2)/(eps_r*eps0/dt+0.5*sige_y(jj)+0.5*A2)
+  C2_ex(j) = 1.0/(eps_r*eps0/dt+0.5*sige_y(jj)+0.5*A2)
+  C3_ex(j) = 0.5*(A1+1.0)/(eps_r*eps0/dt+0.5*sige_y(jj)+0.5*A2)
   jj=jj-1
+ else
+  den_ey(j)=1.0/dy
+  C1_ex(j) = (eps_r*eps0/dt-0.5*A2)/(eps_r*eps0/dt+0.5*A2)
+  C2_ex(j) = 1.0/(eps_r*eps0/dt+0.5*A2)
+  C3_ex(j) = 0.5*(A1+1.0)/(eps_r*eps0/dt+0.5*A2)
  endif
 enddo
 
 ii=npml-1
 do i=1,Nx-1
  if(i<=(npml-1))then
-   den_hx(i)=1.0/(kappah_x(i)*dx)
-  elseif(i>=(Nx+1-npml))then
-   den_hx(i)=1.0/(kappah_x(ii)*dx)
-   ii=ii-1
-  else
-   den_hx(i)=1.0/dx
+  den_hx(i)=1.0/(kappah_x(i)*dx)
+ elseif(i>=(Nx+1-npml))then
+  den_hx(i)=1.0/(kappah_x(ii)*dx)
+  ii=ii-1
+ else
+  den_hx(i)=1.0/dx
  endif
 enddo
 
 ii=npml
 do i=1,Nx-1
  if(i<=npml)then
-   den_ex(i)=1.0/(kappae_x(i)*dx)
-  elseif (i>=(Nx+1-npml))then
-   den_ex(i)=1.0/(kappae_x(ii)*dx)
-   ii=ii-1
-  else
-   den_ex(i)=1.0/dx
+  den_ex(i)=1.0/(kappae_x(i)*dx)
+  C1_ey(i) = (eps_r*eps0/dt-sige_x(i)-0.5*A2)/(eps_r*eps0/dt+sige_x(i)+0.5*A2)
+  C2_ey(i) = 1.0/(eps_r*eps0/dt+sige_x(i)+0.5*A2)
+  C3_ey(i) = 0.5*(A1+1.0)/(eps_r*eps0/dt+sige_x(i)+0.5*A2)
+ elseif (i>=(Nx+1-npml))then
+  den_ex(i)=1.0/(kappae_x(ii)*dx)
+  C1_ey(i) = (eps_r*eps0/dt-sige_x(ii)-0.5*A2)/(eps_r*eps0/dt+sige_x(ii)+0.5*A2)
+  C2_ey(i) = 1.0/(eps_r*eps0/dt+sige_x(ii)+0.5*A2)
+  C3_ey(i) = 0.5*(A1+1.0)/(eps_r*eps0/dt+sige_x(ii)+0.5*A2)
+  ii=ii-1
+ else
+  den_ex(i)=1.0/dx
+  C1_ey(i) = (eps_r*eps0/dt-0.5*A2)/(eps_r*eps0/dt+0.5*A2)
+  C2_ey(i) = 1.0/(eps_r*eps0/dt+0.5*A2)
+  C3_ey(i) = 0.5*(A1+1.0)/(eps_r*eps0/dt+0.5*A2)
  endif
 enddo
 
@@ -308,6 +330,18 @@ Hz_inc=0.0
 
 Jx = 0.0
 Jy = 0.0
+
+PDx=0.0
+PDy=0.0
+
+psi_Hzy_1=0.0
+psi_Exy_1=0.0
+psi_Hzy_2=0.0
+psi_Exy_2=0.0
+psi_Hzx_1=0.0
+psi_Eyx_1=0.0
+psi_Hzx_2=0.0
+psi_Eyx_2=0.0
 
 
 !~~~ Source ~~~!
@@ -392,7 +426,7 @@ do i=1,Nx-1
  do j=2,N_loc
   
   if(FBx(i,j))then !Drude update
-   tmpE=C1*Ex(i,j)+C3*(Hz(i,j)-Hz(i,j-1))/dy-C4*PDx(i,j)
+   tmpE=C1(j)*Ex(i,j)+C2(j)*(Hz(i,j)-Hz(i,j-1))/dy-C3(j)*PDx(i,j)
    PDx(i,j)=A1*PDx(i,j)+A2*(tmpE+Ex(i,j))
    Ex(i,j)=tmpE
   if(j == js)then
@@ -437,7 +471,7 @@ do i=2,Nx-1
  do j=1,N_loc
   
   if(FBy(i,j))then !Drude update
-   tmpE=C1*Ey(i,j)+C3*(Hz(i-1,j)-Hz(i,j))/dx-C4*PDy(i,j)
+   tmpE=C1(i)*Ey(i,j)+C2(i)*(Hz(i-1,j)-Hz(i,j))/dx-C3(i)*PDy(i,j)
    PDy(i,j)=A1*PDy(i,j)+A2*(tmpE+Ey(i,j))
    Ey(i,j)=tmpE
    if(i == is.and.j/=N_loc)then
