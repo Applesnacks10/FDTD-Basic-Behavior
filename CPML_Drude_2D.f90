@@ -448,7 +448,7 @@ enddo
 do i=1,Nx-1
  do j=2,npml
   psi_Exy_1(i,j)=be_y(j)*psi_Exy_1(i,j)+ce_y(j)*(Hz(i,j)-Hz(i,j-1))/dy
-  Ex(i,j)=Ex(i,j)+dt_eps0*psi_Exy_1(i,j)
+  Ex(i,j)=Ex(i,j)+C2_ex(j)*psi_Exy_1(i,j)
  enddo
 enddo
 
@@ -457,7 +457,7 @@ do i=1,Nx-1
  jj=npml
  do j=N_loc+1-npml,N_loc-1
   psi_Exy_2(i,jj)=be_y(jj)*psi_Exy_2(i,jj)+ce_y(jj)*(Hz(i,j)-Hz(i,(j-1)))/dy
-  Ex(i,j)=Ex(i,j)+dt_eps0*psi_Exy_2(i,jj)
+  Ex(i,j)=Ex(i,j)+C2_ex(j)*psi_Exy_2(i,jj)
   jj=jj-1
  enddo
 enddo
@@ -493,13 +493,13 @@ do j=1,N_loc
 !  PML for left Ey, x-direction
  do i=2,npml
   psi_Eyx_1(i,j)=be_x(i)*psi_Eyx_1(i,j)+ce_x(i)*(Hz(i-1,j)-Hz(i,j))/dx
-  Ey(i,j)=Ey(i,j)+dt_eps0*psi_Eyx_1(i,j)
+  Ey(i,j)=Ey(i,j)+C2_ey(i)*psi_Eyx_1(i,j)
  enddo
 !  PML for right Ey, x-direction
  ii=npml
  do i=Nx+1-npml,Nx-1
   psi_Eyx_2(ii,j)=be_x(ii)*psi_Eyx_2(ii,j)+ce_x(ii)*(Hz(i-1,j)-Hz(i,j))/dx
-  Ey(i,j)=Ey(i,j)+dt_eps0*psi_Eyx_2(ii,j)
+  Ey(i,j)=Ey(i,j)+C2_ey(i)*psi_Eyx_2(ii,j)
   ii=ii-1
  enddo
 enddo
