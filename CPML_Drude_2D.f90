@@ -146,6 +146,8 @@ do i = 1,Nx
  enddo
 enddo
 
+FBy = .false.
+Fbx = .false.
 
 !~~~ Grid Return ~~~!
 
