@@ -16,8 +16,8 @@ integer, parameter :: Nt= 1000
 integer, parameter :: Ny=201,N_loc=Ny-1 !N_loc must equal Ny-1 for 1 proc
 double precision, parameter :: y0=-100E-9,yM=100E-9
 
-integer, parameter :: Nx=51
-double precision, parameter :: x0=-25E-9,xM=25E-9
+integer, parameter :: Nx=81
+double precision, parameter :: x0=-40E-9,xM=40E-9
 
 !
 !~~~ Spatial and Temporal steps; Spatial Indexing ~~~!
@@ -64,7 +64,6 @@ double precision tmpE
 !
 
 logical :: FBx(Nx-1,N_loc), FBy(Nx,N_loc)
-double precision, parameter :: z1 = -25*dy, z2 = 25*dy
 
 !
 !~~~ Loop Indices; time ~~~!
@@ -128,7 +127,6 @@ enddo
 
 do i = 1,Nx-1
  do j = 1,N_loc
-  if(y(j) >= z1.and.y(j) <= z2)then
    FBx(i,j) = .true.
   else
    FBx(i,j) = .false.
@@ -138,7 +136,6 @@ enddo
 
 do i = 1,Nx
  do j = 1,N_loc
-  if(yM2(j) >= z1.and.yM2(j) <= z2)then
    FBy(i,j) = .true.
   else
    FBy(i,j) = .false.
