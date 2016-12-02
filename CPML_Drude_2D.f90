@@ -64,6 +64,7 @@ double precision tmpE
 !
 
 logical :: FBx(Nx-1,N_loc), FBy(Nx,N_loc)
+double precision, parameter :: z1 = -25*dy, z2 = 25*dy, slit = 10*dx
 
 !
 !~~~ Loop Indices; time ~~~!
@@ -127,6 +128,7 @@ enddo
 
 do i = 1,Nx-1
  do j = 1,N_loc
+  if(y(j) >= z1.and.y(j) <= z2.and.(xM2(i) <= -1*slit.or.xM2(i) >= slit))then
    FBx(i,j) = .true.
   else
    FBx(i,j) = .false.
@@ -136,6 +138,7 @@ enddo
 
 do i = 1,Nx
  do j = 1,N_loc
+  if(yM2(j) >= z1.and.yM2(j) <= z2.and.(x(i) <= -1*slit.or.x(i) >= slit))then
    FBy(i,j) = .true.
   else
    FBy(i,j) = .false.
