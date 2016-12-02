@@ -1,0 +1,16 @@
+This Branch marks a goal-change.
+Rather than implementing both the Drude model and the Drude-adapted CPML at the same time, I will implement
+the Drude model first
+
+Drude_Permeate_2D
+
+Boundary Conditions: Reflecting in Y, Periodic in X
+Source: Current Source - Amalgamated Plane Wave
+ABC: None
+Scattering: Drude-Disperion throughout (no vacuum)
+Output: Grid-Return
+
+First Run 
+Resulted in an upward-creeping wave of Divergence, seemingly emanating from the bottom of the grid.
+May be due to current souce inside Drude material.
+Proposed solution: add a vacuum cavity in which the current source will reside.
