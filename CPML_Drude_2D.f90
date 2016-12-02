@@ -16,8 +16,8 @@ integer, parameter :: Nt= 1000
 integer, parameter :: Ny=201,N_loc=Ny-1 !N_loc must equal Ny-1 for 1 proc
 double precision, parameter :: y0=-100E-9,yM=100E-9
 
-integer, parameter :: Nx=11
-double precision, parameter :: x0=-5E-9,xM=5E-9
+integer, parameter :: Nx=51
+double precision, parameter :: x0=-25E-9,xM=25E-9
 
 !
 !~~~ Spatial and Temporal steps; Spatial Indexing ~~~!
@@ -41,7 +41,7 @@ double precision Ex_inc(N_loc),Hz_inc(N_loc)
 !
 !~~~ Field Input ~~~!
 !
-integer, parameter :: js = N_loc/2, is = -1
+integer, parameter :: js = N_loc/4, is = -1
 double precision aBH(4)
 double precision, parameter :: tau=0.36d-15,E0=1.0,omega=ev_to_radsec*3.0
 double precision Jx(Nt),Jy(Nt)
@@ -64,7 +64,7 @@ double precision tmpE
 !
 
 logical :: FBx(Nx-1,N_loc), FBy(Nx,N_loc)
-double precision, parameter :: z1 = -5*dy, z2 = 5*dy
+double precision, parameter :: z1 = -25*dy, z2 = 25*dy
 
 !
 !~~~ Loop Indices; time ~~~!
@@ -146,8 +146,8 @@ do i = 1,Nx
  enddo
 enddo
 
-FBy = .false.
-Fbx = .false.
+!FBy = .false.
+!FBx = .false.
 
 !~~~ Grid Return ~~~!
 
