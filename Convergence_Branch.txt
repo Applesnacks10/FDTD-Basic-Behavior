@@ -1,0 +1,5 @@
+I will be creating the Convergence test in Function form, so as to be able to apply it
+easily to any simulation. At the end, I may test it with the code FDTD_3D, since its CPML
+is supposedly known to work. The formulation will take 3 dimensions into account and output
+the magnitude of the "Total Poynting Vector" (|E x H|) for a recti-formed space whose
+dimensions are determined by input.
