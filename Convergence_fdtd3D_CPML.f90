@@ -1,5 +1,6 @@
 function fdtd3D_CPML(res, pml_add) result(P_sum)
 
+   double precision, parameter :: length_add = 1.0E-2 
 !  ..................................
 !  Input Fundamental Constants (MKS units)
    double precision, PARAMETER ::                            &
@@ -12,31 +13,33 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
       epsR = 1.0, sigM1 = 0.0   ! free space
 
 !  ..................................
-!  Specify Number of Time Steps and Grid Size Parameters
-   INTEGER, PARAMETER ::                                     &
-      nmax = 2100, &  ! total number of time steps
-      Imax = 51, Jmax = 126, Kmax = 26  
-
-!  ..................................
 !  Specify Grid Cell Size in Each Direction and Calculate the 
 !  Resulting Courant-Stable Time Step
    double precision, PARAMETER ::                                        &
-      dx = 1.0D-3, dy = 1.0D-3, dz = 1.0D-3 ! cell size in each direction
+      dx = res*1.0D-3, dy = res*1.0D-3, dz = res*1.0D-3 ! cell size in each direction
+
+!  ..................................
+!  Specify Number of Time Steps and Grid Size Parameters
+   INTEGER, PARAMETER ::                                     &
+      nmax = res*2100, &  ! total number of time steps
+      Imax = res*51+pml_add*length_add/dx, res*Jmax = 127+pml_add*length_add/dy, res*Kmax = 27+pml_add*length_add/dy
+      
+!  ..................................
+!  Convergence Detection Zone
+   integer, parameter :: i_start = (Imax-1)/2 - 2, i_end = (Imax-1)/2 + 2, &
+                         j_start = (Jmax-1)/2 - 4, j_end = (Jmax-1)/2 + 4, &
+                         k_start = (Kmax-1)/2 - 1, k_end = (Kmax-1)/2 + 1
+     
       
    double precision, PARAMETER ::             &
       !dt = 0.99 / (C*(1.0/dx**2+1.0/dy**2+1.0/dz**2)**0.5)
-      dt = 1.906574869531006E-12
+      dt = 1.906574869531006E-12/res
                                                  ! time step increment
 
 !  ..................................
 !  Specify the Impulsive Source (See Equation 7.134)
    double precision, PARAMETER ::                                        &
       tw = 53.0E-12, tO = 4.0*tw  
-
-!  ..................................
-!  Specify the Time Step at which the Grid is Recorded for Visualization
-   INTEGER, PARAMETER ::                                        &
-      record_grid = 300 
 
 !  ..................................
 !  Specify the PEC Plate Boundaries and the Source/Recording Points
@@ -51,7 +54,7 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
 !  Corresponds to No PML, and the Grid is Terminated with a PEC)
    INTEGER, PARAMETER ::                        &
       ! PML thickness in each direction 
-      nxPML_1 = 11, nxPML_2 = nxPML_1, nyPML_1 = nxPML_1,      &
+      nxPML_1 = res*11+pml_add*length_add/dx, nxPML_2 = nxPML_1, nyPML_1 = nxPML_1,      &
       nyPML_2 = nxPML_1, nzPML_1 = nxPML_1, nzPML_2 = nxPML_2
 !  ..................................
 !  Specify the CPML Order and Other Parameters
@@ -61,7 +64,7 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
 !      sig_x_max = 0.75 * (0.8*(m+1)/(dx*(muO/epsO*epsR)**0.5)),   &
 !      sig_y_max = 0.75 * (0.8*(m+1)/(dy*(muO/epsO*epsR)**0.5)),   &
 !      sig_z_max = 0.75 * (0.8*(m+1)/(dz*(muO/epsO*epsR)**0.5)),   &
-      sig_x_max = 6.370604950428188  ,&
+      sig_x_max = 6.370604950428188/(res)**0.5  ,&
       sig_y_max = sig_x_max*dy/dx  ,&
       sig_z_max = sig_x_max*dz/dx  ,&
       alpha_x_max = 0.24,   &
@@ -207,14 +210,6 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
    REAL,DIMENSION(Kmax-1)  ::                      &
       den_ez, den_hz
 
-
-!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!  OPEN OUTPUT FILES
-!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   OPEN (UNIT = 30, FILE = "source.dat")
-   OPEN (UNIT = 31, FILE = "probe.dat")
-   OPEN (UNIT = 33, FILE = "view_grid.dat")
-
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !  INITIALIZE VARIABLES
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -255,13 +250,8 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
    psi_Hzx_1(:,:,:) = 0.0
    psi_Hzx_2(:,:,:) = 0.0
 
-   write(*,*)"Imax: ", Imax
-   write(*,*)"Jmax: ", Jmax
-   write(*,*)"Kmax: ", Kmax
-   write(*,*)"dt: ", dt
-   write(*,*)"nmax: ", nmax
-   write(*,*)"max time: ", nmax*dt
-   write(*,*)"record grid after ", record_grid, "dt"
+   write(*,*)"res: ", res
+   write(*,*)"pml_add: ", pml_add
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !  SET CPML PARAMETERS IN EACH DIRECTION
@@ -881,27 +871,10 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
    Ez(i,j,k) = Ez(i,j,k) - CB(i,j,k)*source
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!  RECORD GRID FOR VISUALIZATION
+!  Update P_sum
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   IF (n == record_grid) then
-      DO j = 1,Jmax
-         DO i = 1,Imax      
-            write(33,*)Ez(i,j,ksource)
-	   ENDDO
-	ENDDO
-   CLOSE(UNIT = 33)
-   endif   
-!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!  WRITE TO OUTPUT FILES
-!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
-   P1 = Ez(isource,jsource,ksource)
-   write(30,*)P1      
-   P2 = Ey(irecv1,jrecv1,krecv1)
-   write(31,*)P2      
-
-   IF (mod(n,10) == 0) then
-    WRITE(*,*)n, " of ", nmax
-   ENDIF
+   P_sum = P_sum + Convergence_Collect(3, Ex, Ey, Ez, Hx, Hy, Hz, &
+                                       i_start, i_end, j_start, j_end, k_start, k_end) 
 
    ENDDO
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -910,12 +883,4 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
 !.:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:.
     WRITE(*,*)"done time-stepping"
 
-!-----------------------------------------------------------------------
-! CLOSE OUTPUT FILES
-!-----------------------------------------------------------------------   
-   CLOSE(UNIT = 30)
-   CLOSE(UNIT = 31)
-
-   END PROGRAM fdtd3D_CPML
-!cccccccc1ccccccccc2ccccccccc3ccccccccc4ccccccccc5cccgtgccc6ccccccccc7cc
-
+   end function fdtd3D_CPML
