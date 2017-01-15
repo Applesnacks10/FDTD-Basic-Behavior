@@ -1,47 +1,8 @@
-program Convergence_fdtd3D_CPML
-implicit none
+function fdtd3D_CPML(res, pml_add) result(P_sum)
 
-integer, parameter :: Nr = 5
-integer, parameter, dimension(Nr) :: res_array = (/1,2,4,6,8/)
-integer, parameter, dimension(2) :: pml_add = (/0,1/)
-double precision ::
-double precision :: Convergence(Nr,2), Rel_error(Nr)
-integer :: a,b !loop variables
-
- Convergence = 0.0
-
-do a = 1,Nr
- do b = 1,2
-  if(b == 1)
-   pml_add = .false.
-  elseif(b == 2)
-   pml_add = .true.
-  endif
-  
-  Convergence(a,b) = fdtd3D_CPML()
-  
- enddo! 2 cpml lengths
- 
- Rel_error(a) = abs((Convergence(a,2) - Convergence(a,1))/Convergence(a,1))
- 
-enddo! Nr resolutions
-
-!Transmit Relative Errors
-
- open(file = 'Relative Errors', unit = 40)
-  do a = 1,Nr 
-   write(40,*) res_array(a), Rel_error(a)
-  enddo
- close(unit = 40)
-
-end !MAIN
-
-
- contains !Internal Function
- 
-function fdtd3D_CPML() result(P_sum)
-
-   double precision :: P_sum
+   integer, intent(in) :: res
+   logical, intent(in) :: pml_add
+   double precision, intent(out) :: P_sum
 
    double precision, parameter :: length_add = 1.0E-2 
 !  ..................................
@@ -59,15 +20,15 @@ function fdtd3D_CPML() result(P_sum)
 !  Specify Grid Cell Size in Each Direction and Calculate the 
 !  Resulting Courant-Stable Time Step
    double precision, PARAMETER ::                                        &
-      dx = (1.0D-3)/res_array(a), dy = (1.0D-3)/res_array(a), dz = (1.0D-3)/res_array(a) ! cell size in each direction
+      dx = res*1.0D-3, dy = res*1.0D-3, dz = res*1.0D-3 ! cell size in each direction
 
 !  ..................................
 !  Specify Number of Time Steps and Grid Size Parameters
    INTEGER, PARAMETER ::                                     &
-      nmax = res_array(a)*2100, &  ! total number of time steps
-      Imax = res_array(a)*51+pml_add*length_add/dx, &
-      Jmax = res_array(a)*127+pml_add*length_add/dy, &
-      Kmax = res_array(a)*27+pml_add*length_add/dy
+      nmax = res*2100, &  ! total number of time steps
+      Imax = res*51+pml_add*length_add/dx, &
+      Jmax = res*127+pml_add*length_add/dy, &
+      Kmax = res*27+pml_add*length_add/dy
       
 !  ..................................
 !  Convergence Detection Zone
@@ -78,7 +39,7 @@ function fdtd3D_CPML() result(P_sum)
       
    double precision, PARAMETER ::             &
       !dt = 0.99 / (C*(1.0/dx**2+1.0/dy**2+1.0/dz**2)**0.5)
-      dt = 1.906574869531006E-12/res_array(a)
+      dt = 1.906574869531006E-12/res
                                                  ! time step increment
 
 !  ..................................
@@ -99,7 +60,7 @@ function fdtd3D_CPML() result(P_sum)
 !  Corresponds to No PML, and the Grid is Terminated with a PEC)
    INTEGER, PARAMETER ::                        &
       ! PML thickness in each direction 
-      nxPML_1 = res_array(a)*11+pml_add*length_add/dx, nxPML_2 = nxPML_1, nyPML_1 = nxPML_1,      &
+      nxPML_1 = res*11+pml_add*length_add/dx, nxPML_2 = nxPML_1, nyPML_1 = nxPML_1,      &
       nyPML_2 = nxPML_1, nzPML_1 = nxPML_1, nzPML_2 = nxPML_2
 !  ..................................
 !  Specify the CPML Order and Other Parameters
@@ -109,7 +70,7 @@ function fdtd3D_CPML() result(P_sum)
 !      sig_x_max = 0.75 * (0.8*(m+1)/(dx*(muO/epsO*epsR)**0.5)),   &
 !      sig_y_max = 0.75 * (0.8*(m+1)/(dy*(muO/epsO*epsR)**0.5)),   &
 !      sig_z_max = 0.75 * (0.8*(m+1)/(dz*(muO/epsO*epsR)**0.5)),   &
-      sig_x_max = 6.370604950428188/(res_array(a))**0.5  ,&
+      sig_x_max = 6.370604950428188/(res)**0.5  ,&
       sig_y_max = sig_x_max*dy/dx  ,&
       sig_z_max = sig_x_max*dz/dx  ,&
       alpha_x_max = 0.24,   &
@@ -297,8 +258,8 @@ function fdtd3D_CPML() result(P_sum)
    
    P_sum = 0.0
 
-   write(*,*)"res: ", res_array(a)
-   write(*,*)"pml_add: ", pml_add(b)
+   write(*,*)"res: ", res
+   write(*,*)"pml_add: ", pml_add
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !  SET CPML PARAMETERS IN EACH DIRECTION
@@ -931,64 +892,3 @@ function fdtd3D_CPML() result(P_sum)
     WRITE(*,*)"done time-stepping"
 
    end function fdtd3D_CPML
-   
-function Convergence_Collect(D, Ex, Ey, Ez, Hx, Hy, Hz, &
-                             i_start, i_end, j_start, j_end, k_start, k_end) result(P_sum)
-                             
-integer, intent(in) :: D, i_start, i_end, j_start, j_end, k_start, k_end
-
-if(D == 3)then
-double precision, intent(in) :: Ex(:,:,:), Ey(:,:,:), Ez(:,:,:), Hx(:,:,:), Hy(:,:,:), Hz(:,:,:)
-elseif(D == 2)then
-double precision, intent(in) :: Ex(:,:), Ey(:,:), Ez(:,:), Hx(:,:), Hy(:,:), Hz(:,:)
-elseif(D == 1)then
-double precision, intent(in) :: Ex(:), Ey(:), Ez(:), Hx(:), Hy(:), Hz(:)
-endif
-
-double precision, intent(out) :: P_sum
-double precision :: Px, Py, Pz
-integer :: i,j,k
-
-P_sum = 0.0
-Px = 0.0
-Py = 0.0
-Pz = 0.0
-
-if(D == 3)then !add Poynting magnitudes in 3D
- do i = i_start,i_end
-  do j = j_start,j_end
-   do k = k_start,k_end
-    Px = Ey(i,j,k)*Hz(i,j,k) - Ez(i,j,k)*Hy(i,j,k)
-    Py = Ez(i,j,k)*Hx(i,j,k) - Ex(i,j,k)*Hz(i,j,k)
-    Pz = Ex(i,j,k)*Hy(i,j,k) - Ey(i,j,k)*Hx(i,j,k)
-    P_sum = P_sum + sqrt(Px**2 + Py**2 + Pz**2)
-   enddo
-  enddo
- enddo
-endif
-
-if(D == 2)then !add Poynting magnitudes in 2D
- do i = i_start,i_end
-  do j = j_start,j_end
-   Px = Ey(i,j)*Hz(i,j) - Ez(i,j)*Hy(i,j)
-   Py = Ez(i,j)*Hx(i,j) - Ex(i,j)*Hz(i,j)
-   Pz = Ex(i,j)*Hy(i,j) - Ey(i,j)*Hx(i,j)
-   P_sum = P_sum + sqrt(Px**2 + Py**2 + Pz**2) 
-  enddo
- enddo
-endif
-
-if(D == 1)then !add Poynting magnitudes in 1D
- do i = i_start,i_end
-  Px = Ey(i)*Hz(i) - Ez(i)*Hy(i)
-  Py = Ez(i)*Hx(i) - Ex(i)*Hz(i)
-  Pz = Ex(i)*Hy(i) - Ey(i)*Hx(i)
-  P_sum = P_sum + sqrt(Px**2 + Py**2 + Pz**2)
- enddo
-endif
- 
-if( D <= 0.or.D => 4 )then !returns a marked P_sum if dimension is non-Euclidean
- P_sum = -1.0
-endif
-
-end function Convergence_Collect
