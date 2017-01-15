@@ -6,19 +6,7 @@ integer, parameter, dimension(Nr) :: res_array = (/1,2,4,6,8/)
 integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
-
-! Start Function Declaration
-interface
-    function Convergence_Collect_3D(Ex, Ey, Ez, Hx, Hy, Hz, &
-	                              i_start, i_end, j_start, j_end, k_start, k_end)
-	 double precision :: Convergence_Collect_3D
-	 double precision, dimension(:,:,:), intent(in) :: Ex, Ey, Ez, Hx, Hy, Hz
-	 integer, intent(in) :: i_start, i_end, j_start, j_end, k_start, k_end
-    end function Convergence_Collect_3D
-end interface
-
-! End Function Declaration
-
+double precision :: Px, Py, Pz, P_sum
  Convergence = 0.0
 
 do a = 1,Nr
@@ -45,9 +33,9 @@ enddo! Nr resolutions
 !-----------------------------------------------------------------------
  contains
  
-function fdtd3D_CPML() result(P_sum)
+function fdtd3D_CPML() result(P_sum_fdtd)
 
-   double precision :: P_sum
+   double precision :: P_sum_fdtd
 
    double precision, parameter :: length_add = 1.0E-2 
 !  ..................................
@@ -108,7 +96,7 @@ function fdtd3D_CPML() result(P_sum)
 !  Convergence Detection Zone
    integer :: i_start, i_end, &
               j_start, j_end, &
-              k_start, k_end,
+              k_start, k_end
      
       
    double precision ::             &
@@ -443,7 +431,7 @@ allocate(den_ez(Kmax-1), den_hz(Kmax-1))
    psi_Hzx_1(:,:,:) = 0.0
    psi_Hzx_2(:,:,:) = 0.0
    
-   P_sum = 0.0
+   P_sum_fdtd = 0.0
 
    write(*,*)"res: ", res_array(a)
    write(*,*)"pml_add: ", pml_add(b)
@@ -1066,10 +1054,26 @@ allocate(den_ez(Kmax-1), den_hz(Kmax-1))
    Ez(i,j,k) = Ez(i,j,k) - CB(i,j,k)*source
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!  Update P_sum
+!  Update P_sum_fdtd
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   P_sum = P_sum + Convergence_Collect_3D(Ex, Ey, Ez, Hx, Hy, Hz, &
-                                       i_start, i_end, j_start, j_end, k_start, k_end)/res_array(a) ! 1/res is the integration-equalizer 
+
+Px = 0.0
+Py = 0.0
+Pz = 0.0
+P_sum = 0.0
+
+do i = i_start,i_end !Add Poynting magnitudes in 3D
+ do j = j_start,j_end
+  do k = k_start,k_end
+   Px = Ey(i,j,k)*Hz(i,j,k) - Ez(i,j,k)*Hy(i,j,k)
+   Py = Ez(i,j,k)*Hx(i,j,k) - Ex(i,j,k)*Hz(i,j,k)
+   Pz = Ex(i,j,k)*Hy(i,j,k) - Ey(i,j,k)*Hx(i,j,k)
+   P_sum = P_sum + sqrt(Px**2 + Py**2 + Pz**2)
+  enddo
+ enddo
+enddo
+
+P_sum_fdtd = P_sum_fdtd + P_sum/res_array(a) !res is the integration equalizer
 
    ENDDO
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1081,31 +1085,3 @@ allocate(den_ez(Kmax-1), den_hz(Kmax-1))
 end function fdtd3D_CPML
 
 end !Main
-   
-function Convergence_Collect_3D(Ex, Ey, Ez, Hx, Hy, Hz, &
-                             i_start, i_end, j_start, j_end, k_start, k_end) result(P_sum)
-                             
-integer, intent(in) :: i_start, i_end, j_start, j_end, k_start, k_end
-double precision, dimension(:,:,:), intent(in) :: Ex, Ey, Ez, Hx, Hy, Hz
-
-double precision :: P_sum, Px, Py, Pz
-integer :: i,j,k
-
-P_sum = 0.0
-Px = 0.0
-Py = 0.0
-Pz = 0.0
-
-!add Poynting magnitudes in 3D
-do i = i_start,i_end
- do j = j_start,j_end
-  do k = k_start,k_end
-   Px = Ey(i,j,k)*Hz(i,j,k) - Ez(i,j,k)*Hy(i,j,k)
-   Py = Ez(i,j,k)*Hx(i,j,k) - Ex(i,j,k)*Hz(i,j,k)
-   Pz = Ex(i,j,k)*Hy(i,j,k) - Ey(i,j,k)*Hx(i,j,k)
-   P_sum = P_sum + sqrt(Px**2 + Py**2 + Pz**2)
-  enddo
- enddo
-enddo
-
-end function Convergence_Collect_3D
