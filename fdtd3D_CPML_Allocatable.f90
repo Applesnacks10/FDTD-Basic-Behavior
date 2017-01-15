@@ -49,42 +49,37 @@ function fdtd3D_CPML() result(P_sum)
 !  ..................................
 !  Specify Grid Cell Size in Each Direction and Calculate the 
 !  Resulting Courant-Stable Time Step
-   double precision, PARAMETER ::                                        &
-      dx = 1.0D-3/res_array(a), dy = 1.0D-3/res_array(a), dz = 1.0D-3/res_array(a) ! cell size in each direction
+   double precision ::                                        &
+      dx, dy, dz
 
 !  ..................................
 !  Specify Number of Time Steps and Grid Size Parameters
-   INTEGER, PARAMETER ::                                     &
-      nmax = res_array(a)*2100, &  ! total number of time steps
-      Imax = res_array(a)*51+pml_add(b)*length_add/dx, &
-      Jmax = res_array(a)*127+pml_add(b)*length_add/dy, &
-      Kmax = res_array(a)*27+pml_add(b)*length_add/dy
+   INTEGER ::                                     &
+      nmax, Imax, Jmax, Kmax
       
 !  ..................................
 !  Convergence Detection Zone
-   integer, parameter :: i_start = (Imax-1)/2 - 2, i_end = (Imax-1)/2 + 2, &
-                         j_start = (Jmax-1)/2 - 4, j_end = (Jmax-1)/2 + 4, &
-                         k_start = (Kmax-1)/2 + 1, k_end = (Kmax-1)/2 + 1
+   integer :: i_start, i_end, &
+              j_start, j_end, &
+              k_start, k_end
      
       
-   double precision, PARAMETER ::             &
-      !dt = 0.99 / (C*(1.0/dx**2+1.0/dy**2+1.0/dz**2)**0.5)
-      dt = 1.906574869531006E-12/res_array(a)
-                                                 ! time step increment
+   double precision ::             &
+       dt
 
 !  ..................................
 !  Specify the PEC Plate Boundaries and the Source/Recording Points
-   INTEGER, PARAMETER ::                                    &
-      istart = (Imax-1)/2-11*res_array(a), iend = istart+24*res_array(a), jstart = Jmax/2-49*res_array(a),   &
-      jend = jstart + 99*res_array(a), kstart = Kmax/2, kend = kstart,      &
+   INTEGER ::                                    &
+      istart, iend, jstart,   &
+      jend, kstart, kend,      &
 
 !  ..................................
 !  Specify the CPML Thickness in Each Direction (Value of Zero 
 !  Corresponds to No PML, and the Grid is Terminated with a PEC)
-   INTEGER, PARAMETER ::                        &
+   INTEGER ::                        &
       ! PML thickness in each direction 
-      nxPML_1 = res_array(a)*11+pml_add(b)*length_add/dx, nxPML_2 = nxPML_1, nyPML_1 = nxPML_1,      &
-      nyPML_2 = nxPML_1, nzPML_1 = nxPML_1, nzPML_2 = nxPML_2
+      nxPML_1, nxPML_2, nyPML_1,      &
+      nyPML_2, nzPML_1, nzPML_2
       
    REAL :: DA, DB
 
@@ -94,135 +89,132 @@ function fdtd3D_CPML() result(P_sum)
 
 
 !     TM components
-   REAL,DIMENSION(Imax, Jmax, Kmax-1)  ::                      &
+   REAL, allocatable, DIMENSION(:,:,:)  ::                      &
       Ez, CA, CB, sig, eps
 
-   REAL,DIMENSION(Imax-1, Jmax, Kmax-1)  ::                      &
+   REAL, allocatable, DIMENSION(:,:,:)  ::                      &
       Hy
 
-   REAL,DIMENSION(Imax,Jmax-1, Kmax-1)  ::                      &
+   REAL, allocatable, DIMENSION(:,:,:)  ::                      &
       Hx
 
-   REAL  ::                        &
-      DA, DB
-
 !     TE components
-   REAL,DIMENSION(Imax-1, Jmax-1, Kmax)  ::                      &
+   REAL, allocatable, DIMENSION(:,:,:)  ::                      &
       Hz
 
-   REAL,DIMENSION(Imax-1, Jmax, Kmax)  ::                      &
+   REAL, allocatable, DIMENSION(:,:,:)  ::                      &
       Ex
 
-   REAL,DIMENSION(Imax,Jmax-1, Kmax)  ::                      &
+   REAL, allocatable, DIMENSION(:,:,:)  ::                      &
       Ey
 
 !  PML
-   REAL ,DIMENSION(nxPML_1,Jmax,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Ezx_1
 
-   REAL ,DIMENSION(nxPML_2,Jmax,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Ezx_2
 
-   REAL ,DIMENSION(nxPML_1-1,Jmax,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Hyx_1
 
-   REAL ,DIMENSION(nxPML_2-1,Jmax,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Hyx_2
 
-   REAL ,DIMENSION(Imax,nyPML_1,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Ezy_1                               
 
-   REAL ,DIMENSION(Imax,nyPML_2,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Ezy_2
 
-   REAL ,DIMENSION(Imax,nyPML_1-1,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Hxy_1                               
 
-   REAL ,DIMENSION(Imax,nyPML_2-1,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Hxy_2
 
-   REAL ,DIMENSION(Imax,Jmax-1,nzPML_1-1) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Hxz_1
 
-   REAL ,DIMENSION(Imax,Jmax-1,nzPML_2-1) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Hxz_2
 
-   REAL ,DIMENSION(Imax-1,Jmax,nzPML_1-1) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Hyz_1
 
-   REAL ,DIMENSION(Imax-1,Jmax,nzPML_2-1) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Hyz_2
 
-   REAL ,DIMENSION(Imax-1,Jmax,nzPML_1) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Exz_1
 
-   REAL ,DIMENSION(Imax-1,Jmax,nzPML_2) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Exz_2
 
-   REAL ,DIMENSION(Imax,Jmax-1,nzPML_1) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Eyz_1
 
-   REAL ,DIMENSION(Imax,Jmax-1,nzPML_2) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Eyz_2
 
-   REAL ,DIMENSION(nxPML_1-1,Jmax-1,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Hzx_1
-   REAL ,DIMENSION(nxPML_1,Jmax-1,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Eyx_1
 
-   REAL ,DIMENSION(nxPML_2-1,Jmax-1,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Hzx_2
-   REAL ,DIMENSION(nxPML_2,Jmax-1,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Eyx_2
 
-   REAL ,DIMENSION(Imax-1,nyPML_1-1,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Hzy_1                               
-   REAL ,DIMENSION(Imax-1,nyPML_1,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Exy_1                               
 
-   REAL ,DIMENSION(Imax-1,nyPML_2-1,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Hzy_2
-   REAL ,DIMENSION(Imax-1,nyPML_2,Kmax) ::                       &
+   REAL , allocatable, DIMENSION(:,:,:) ::                       &
       psi_Exy_2
 
-   REAL ,DIMENSION(nxPML_1) ::                       &
+   REAL , allocatable, DIMENSION(:) ::                       &
       be_x_1, ce_x_1, alphae_x_PML_1, sige_x_PML_1, kappae_x_PML_1
-   REAL ,DIMENSION(nxPML_1-1) ::                       &
+   REAL , allocatable, DIMENSION(:) ::                       &
       bh_x_1, ch_x_1, alphah_x_PML_1, sigh_x_PML_1, kappah_x_PML_1
 
-   REAL ,DIMENSION(nxPML_2) ::                       &
+   REAL , allocatable, DIMENSION(:) ::                       &
       be_x_2, ce_x_2, alphae_x_PML_2, sige_x_PML_2, kappae_x_PML_2
-   REAL ,DIMENSION(nxPML_2-1) ::                       &
+   REAL , allocatable, DIMENSION(:) ::                       &
       bh_x_2, ch_x_2, alphah_x_PML_2, sigh_x_PML_2, kappah_x_PML_2
 
-   REAL ,DIMENSION(nyPML_1) ::                       &
+   REAL , allocatable, DIMENSION(:) ::                       &
       be_y_1, ce_y_1, alphae_y_PML_1, sige_y_PML_1, kappae_y_PML_1
-   REAL ,DIMENSION(nyPML_1-1) ::                       &
+   REAL , allocatable, DIMENSION(:) ::                       &
       bh_y_1, ch_y_1, alphah_y_PML_1, sigh_y_PML_1, kappah_y_PML_1
 
-   REAL ,DIMENSION(nyPML_2) ::                       &
+   REAL , allocatable, DIMENSION(:) ::                       &
       be_y_2, ce_y_2, alphae_y_PML_2, sige_y_PML_2, kappae_y_PML_2
-   REAL ,DIMENSION(nyPML_2-1) ::                       &
+   REAL , allocatable, DIMENSION(:) ::                       &
       bh_y_2, ch_y_2, alphah_y_PML_2, sigh_y_PML_2, kappah_y_PML_2
 
-   REAL ,DIMENSION(nzPML_1) ::                       &
+   REAL , allocatable, DIMENSION(:) ::                       &
       be_z_1, ce_z_1, alphae_z_PML_1, sige_z_PML_1, kappae_z_PML_1
-   REAL ,DIMENSION(nzPML_1-1) ::                       &
+   REAL , allocatable, DIMENSION(:) ::                       &
       bh_z_1, ch_z_1, alphah_z_PML_1, sigh_z_PML_1, kappah_z_PML_1
 
-   REAL ,DIMENSION(nzPML_2) ::                       &
+   REAL , allocatable, DIMENSION(:) ::                       &
       be_z_2, ce_z_2, alphae_z_PML_2, sige_z_PML_2, kappae_z_PML_2
-   REAL ,DIMENSION(nzPML_2-1) ::                       &
+   REAL , allocatable, DIMENSION(:) ::                       &
       bh_z_2, ch_z_2, alphah_z_PML_2, sigh_z_PML_2, kappah_z_PML_2
 
 !     denominators for the update equations
-   REAL,DIMENSION(Imax-1)  ::                      &
+   REAL, allocatable, DIMENSION(:)  ::                      &
       den_ex, den_hx
 
-   REAL,DIMENSION(Jmax-1)  ::                      &
+   REAL, allocatable, DIMENSION(:)  ::                      &
       den_ey, den_hy
 
-   REAL,DIMENSION(Kmax-1)  ::                      &
+   REAL, allocatable, DIMENSION(:)  ::                      &
       den_ez, den_hz
       
       
