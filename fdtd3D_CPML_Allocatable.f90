@@ -1016,7 +1016,7 @@ allocate(den_ez(Kmax-1), den_hz(Kmax-1))
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !  Update P_sum
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   P_sum = P_sum + Convergence_Collect(3, Ex, Ey, Ez, Hx, Hy, Hz, &
+   P_sum = P_sum + Convergence_Collect_3D(Ex, Ey, Ez, Hx, Hy, Hz, &
                                        i_start, i_end, j_start, j_end, k_start, k_end) 
 
    ENDDO
@@ -1026,4 +1026,4 @@ allocate(den_ez(Kmax-1), den_hz(Kmax-1))
 !.:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:.
     WRITE(*,*)"done time-stepping"
 
-   end function fdtd3D_CPML
+end function fdtd3D_CPML
