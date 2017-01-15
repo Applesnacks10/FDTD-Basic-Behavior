@@ -1,8 +1,6 @@
-function fdtd3D_CPML(res, pml_add) result(P_sum)
+function fdtd3D_CPML() result(P_sum)
 
-   integer, intent(in) :: res
-   logical, intent(in) :: pml_add
-   double precision, intent(out) :: P_sum
+   double precision :: P_sum
 
    double precision, parameter :: length_add = 1.0E-2 
 !  ..................................
@@ -20,15 +18,15 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
 !  Specify Grid Cell Size in Each Direction and Calculate the 
 !  Resulting Courant-Stable Time Step
    double precision, PARAMETER ::                                        &
-      dx = res*1.0D-3, dy = res*1.0D-3, dz = res*1.0D-3 ! cell size in each direction
+      dx = 1.0D-3/res_array(a), dy = 1.0D-3/res_array(a), dz = 1.0D-3/res_array(a) ! cell size in each direction
 
 !  ..................................
 !  Specify Number of Time Steps and Grid Size Parameters
    INTEGER, PARAMETER ::                                     &
-      nmax = res*2100, &  ! total number of time steps
-      Imax = res*51+pml_add*length_add/dx, &
-      Jmax = res*127+pml_add*length_add/dy, &
-      Kmax = res*27+pml_add*length_add/dy
+      nmax = res_array(a)*2100, &  ! total number of time steps
+      Imax = res_array(a)*51+pml_add(b)*length_add/dx, &
+      Jmax = res_array(a)*127+pml_add(b)*length_add/dy, &
+      Kmax = res_array(a)*27+pml_add(b)*length_add/dy
       
 !  ..................................
 !  Convergence Detection Zone
@@ -39,7 +37,7 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
       
    double precision, PARAMETER ::             &
       !dt = 0.99 / (C*(1.0/dx**2+1.0/dy**2+1.0/dz**2)**0.5)
-      dt = 1.906574869531006E-12/res
+      dt = 1.906574869531006E-12/res_array(a)
                                                  ! time step increment
 
 !  ..................................
@@ -60,7 +58,7 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
 !  Corresponds to No PML, and the Grid is Terminated with a PEC)
    INTEGER, PARAMETER ::                        &
       ! PML thickness in each direction 
-      nxPML_1 = res*11+pml_add*length_add/dx, nxPML_2 = nxPML_1, nyPML_1 = nxPML_1,      &
+      nxPML_1 = res_array(a)*11+pml_add(b)*length_add/dx, nxPML_2 = nxPML_1, nyPML_1 = nxPML_1,      &
       nyPML_2 = nxPML_1, nzPML_1 = nxPML_1, nzPML_2 = nxPML_2
 !  ..................................
 !  Specify the CPML Order and Other Parameters
@@ -70,7 +68,7 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
 !      sig_x_max = 0.75 * (0.8*(m+1)/(dx*(muO/epsO*epsR)**0.5)),   &
 !      sig_y_max = 0.75 * (0.8*(m+1)/(dy*(muO/epsO*epsR)**0.5)),   &
 !      sig_z_max = 0.75 * (0.8*(m+1)/(dz*(muO/epsO*epsR)**0.5)),   &
-      sig_x_max = 6.370604950428188/(res)**0.5  ,&
+      sig_x_max = 6.370604950428188  ,&
       sig_y_max = sig_x_max*dy/dx  ,&
       sig_z_max = sig_x_max*dz/dx  ,&
       alpha_x_max = 0.24,   &
@@ -258,8 +256,8 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
    
    P_sum = 0.0
 
-   write(*,*)"res: ", res
-   write(*,*)"pml_add: ", pml_add
+   write(*,*)"res: ", res_array(a)
+   write(*,*)"pml_add: ", pml_add(b)
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !  SET CPML PARAMETERS IN EACH DIRECTION
