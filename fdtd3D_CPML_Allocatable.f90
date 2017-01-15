@@ -13,6 +13,32 @@ function fdtd3D_CPML() result(P_sum)
 !  Specify Material Relative Permittivity and Conductivity
    double precision, PARAMETER::                      &
       epsR = 1.0, sigM1 = 0.0   ! free space
+      
+!  ..................................
+!  Specify the Impulsive Source (See Equation 7.134)
+   double precision, PARAMETER ::                                        &
+      tw = 53.0E-12, tO = 4.0*tw  
+
+!  ..................................
+!  Specify the CPML Order and Other Parameters
+   INTEGER, PARAMETER ::                        & 
+      m = 3, ma = 1 
+   double precision, PARAMETER  ::                     &
+!      sig_x_max = 0.75 * (0.8*(m+1)/(dx*(muO/epsO*epsR)**0.5)),   &
+!      sig_y_max = 0.75 * (0.8*(m+1)/(dy*(muO/epsO*epsR)**0.5)),   &
+!      sig_z_max = 0.75 * (0.8*(m+1)/(dz*(muO/epsO*epsR)**0.5)),   &
+      sig_x_max = 6.370604950428188  ,&
+      sig_y_max = sig_x_max  ,&
+      sig_z_max = sig_x_max  ,&
+      alpha_x_max = 0.24,   &
+      alpha_y_max = alpha_x_max, alpha_z_max = alpha_x_max, &
+      kappa_x_max = 15.0, &
+      kappa_y_max = kappa_x_max, kappa_z_max = kappa_x_max
+
+!-------------------------------------------------------------------
+!---------------------- Start of Un-Parametrized Variables ---------
+!-------------------------------------------------------------------
+
 
 !  ..................................
 !  Specify Grid Cell Size in Each Direction and Calculate the 
@@ -41,17 +67,12 @@ function fdtd3D_CPML() result(P_sum)
                                                  ! time step increment
 
 !  ..................................
-!  Specify the Impulsive Source (See Equation 7.134)
-   double precision, PARAMETER ::                                        &
-      tw = 53.0E-12, tO = 4.0*tw  
-
-!  ..................................
 !  Specify the PEC Plate Boundaries and the Source/Recording Points
    INTEGER, PARAMETER ::                                    &
-      istart = (Imax-1)/2-11, iend = istart+24, jstart = Jmax/2-49,   &
-      jend = jstart + 99, kstart = Kmax/2, kend = kstart,      &
+      istart = (Imax-1)/2-11*res_array(a), iend = istart+24*res_array(a), jstart = Jmax/2-49*res_array(a),   &
+      jend = jstart + 99*res_array(a), kstart = Kmax/2, kend = kstart,      &
       isource = istart, jsource = jstart, ksource = kstart,     &
-      irecv1 = iend, jrecv1 = jend+1, krecv1 = kend  ! Ey at probe point
+      irecv1 = iend, jrecv1 = jend+1*res_array(a), krecv1 = kend  ! Ey at probe point
 
 !  ..................................
 !  Specify the CPML Thickness in Each Direction (Value of Zero 
@@ -60,21 +81,6 @@ function fdtd3D_CPML() result(P_sum)
       ! PML thickness in each direction 
       nxPML_1 = res_array(a)*11+pml_add(b)*length_add/dx, nxPML_2 = nxPML_1, nyPML_1 = nxPML_1,      &
       nyPML_2 = nxPML_1, nzPML_1 = nxPML_1, nzPML_2 = nxPML_2
-!  ..................................
-!  Specify the CPML Order and Other Parameters
-   INTEGER, PARAMETER ::                        & 
-      m = 3, ma = 1 
-   double precision, PARAMETER  ::                     &
-!      sig_x_max = 0.75 * (0.8*(m+1)/(dx*(muO/epsO*epsR)**0.5)),   &
-!      sig_y_max = 0.75 * (0.8*(m+1)/(dy*(muO/epsO*epsR)**0.5)),   &
-!      sig_z_max = 0.75 * (0.8*(m+1)/(dz*(muO/epsO*epsR)**0.5)),   &
-      sig_x_max = 6.370604950428188  ,&
-      sig_y_max = sig_x_max*dy/dx  ,&
-      sig_z_max = sig_x_max*dz/dx  ,&
-      alpha_x_max = 0.24,   &
-      alpha_y_max = alpha_x_max, alpha_z_max = alpha_x_max, &
-      kappa_x_max = 15.0, &
-      kappa_y_max = kappa_x_max, kappa_z_max = kappa_x_max
 
    INTEGER ::                                                &
 	i,j,ii,jj,k,kk,n
