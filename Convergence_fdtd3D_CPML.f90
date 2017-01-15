@@ -2,17 +2,11 @@ program Convergence_fdtd3D_CPML
 implicit none
 
 integer, parameter :: Nr = 5
-integer :: res_array(Nr)
-logical :: pml_add
+integer, parameter, dimension(Nr) :: res_array = (/1,2,4,6,8/)
+integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :;
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
-
-res_array(1) = 1
-res_array(2) = 2
-res_array(3) = 4
-res_array(4) = 6
-res_array(5) = 8
 
  Convergence = 0.0
 
@@ -28,7 +22,7 @@ do a = 1,Nr
   
  enddo! 2 cpml lengths
  
- Rel_error(a) = abs((Convergence(a,2) - Convergence(a,1))/Convergence(a,2))
+ Rel_error(a) = abs((Convergence(a,2) - Convergence(a,1))/Convergence(a,1))
  
 enddo! Nr resolutions
 
@@ -65,7 +59,7 @@ function fdtd3D_CPML() result(P_sum)
 !  Specify Grid Cell Size in Each Direction and Calculate the 
 !  Resulting Courant-Stable Time Step
    double precision, PARAMETER ::                                        &
-      dx = (1.0D-3)/res, dy = (1.0D-3)/res, dz = (1.0D-3)/res ! cell size in each direction
+      dx = (1.0D-3)/res_array(a), dy = (1.0D-3)/res, dz = (1.0D-3)/res ! cell size in each direction
 
 !  ..................................
 !  Specify Number of Time Steps and Grid Size Parameters
