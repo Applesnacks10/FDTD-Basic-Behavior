@@ -43,13 +43,11 @@ enddo! Nr resolutions
 end !MAIN
 
 
+ contains !Internal Function
+ 
+function fdtd3D_CPML() result(P_sum)
 
-
-function fdtd3D_CPML(res, pml_add) result(P_sum)
-
-   integer, intent(in) :: res
-   logical, intent(in) :: pml_add
-   double precision, intent(out) :: P_sum
+   double precision :: P_sum
 
    double precision, parameter :: length_add = 1.0E-2 
 !  ..................................
@@ -67,7 +65,7 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
 !  Specify Grid Cell Size in Each Direction and Calculate the 
 !  Resulting Courant-Stable Time Step
    double precision, PARAMETER ::                                        &
-      dx = res*1.0D-3, dy = res*1.0D-3, dz = res*1.0D-3 ! cell size in each direction
+      dx = (1.0D-3)/res, dy = (1.0D-3)/res, dz = (1.0D-3)/res ! cell size in each direction
 
 !  ..................................
 !  Specify Number of Time Steps and Grid Size Parameters
