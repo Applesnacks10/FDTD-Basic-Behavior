@@ -7,6 +7,18 @@ integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
 
+! Start Function Declaration
+interface
+    function Convergence_Collect_3D(Ex, Ey, Ez, Hx, Hy, Hz, &
+	                              i_start, i_end, j_start, j_end, k_start, k_end)
+	 double precision :: Convergence_Collect_3D
+	 double precision, dimension(:,:,:), intent(in) :: Ex, Ey, Ez, Hx, Hy, Hz
+	 integer, intent(in) :: i_start, i_end, j_start, j_end, k_start, k_end
+    end function Convergence_Collect_3D
+end interface
+
+! End Function Declaration
+
  Convergence = 0.0
 
 do a = 1,Nr
@@ -28,10 +40,10 @@ enddo! Nr resolutions
   enddo
  close(unit = 40)
 
-end !MAIN
-
-
- contains !Internal Function (simulation)
+!-----------------------------------------------------------------------
+!------------------------ Internal Function ----------------------------
+!-----------------------------------------------------------------------
+ contains
  
 function fdtd3D_CPML() result(P_sum)
 
@@ -96,7 +108,7 @@ function fdtd3D_CPML() result(P_sum)
 !  Convergence Detection Zone
    integer :: i_start, i_end, &
               j_start, j_end, &
-              k_start, k_end
+              k_start, k_end,
      
       
    double precision ::             &
@@ -106,7 +118,8 @@ function fdtd3D_CPML() result(P_sum)
 !  Specify the PEC Plate Boundaries and the Source/Recording Points
    INTEGER ::                                    &
       istart, iend, jstart,   &
-      jend, kstart, kend
+      jend, kstart, kend,    &
+      isource, jsource, ksource
 
 !  ..................................
 !  Specify the CPML Thickness in Each Direction (Value of Zero 
@@ -281,6 +294,10 @@ function fdtd3D_CPML() result(P_sum)
  jend = jstart + 99*res_array(a)
  kstart = Kmax/2
  kend = kstart
+ 
+ isource = istart
+ jsource = jstart
+ ksource = kstart
  
  nxPML_1 = res_array(a)*11+pml_add(b)*length_add/dx
  nxPML_2 = nxPML_1
@@ -1062,6 +1079,8 @@ allocate(den_ez(Kmax-1), den_hz(Kmax-1))
     WRITE(*,*)"done time-stepping"
 
 end function fdtd3D_CPML
+
+end !Main
    
 function Convergence_Collect_3D(Ex, Ey, Ez, Hx, Hy, Hz, &
                              i_start, i_end, j_start, j_end, k_start, k_end) result(P_sum)
