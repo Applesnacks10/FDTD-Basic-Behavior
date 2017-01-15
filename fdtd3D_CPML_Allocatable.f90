@@ -71,13 +71,12 @@ function fdtd3D_CPML() result(P_sum)
 !  Specify the PEC Plate Boundaries and the Source/Recording Points
    INTEGER ::                                    &
       istart, iend, jstart,   &
-      jend, kstart, kend,      &
+      jend, kstart, kend
 
 !  ..................................
 !  Specify the CPML Thickness in Each Direction (Value of Zero 
 !  Corresponds to No PML, and the Grid is Terminated with a PEC)
-   INTEGER ::                        &
-      ! PML thickness in each direction 
+   INTEGER ::                         &
       nxPML_1, nxPML_2, nyPML_1,      &
       nyPML_2, nzPML_1, nzPML_2
       
@@ -284,7 +283,7 @@ allocate(psi_Ezy_1(Imax,nyPML_1,Kmax))
 
 allocate(psi_Ezy_2(Imax,nyPML_2,Kmax))
 
-allocate(psi_Hxy_1Imax,nyPML_1-1,Kmax))                               
+allocate(psi_Hxy_1(Imax,nyPML_1-1,Kmax))                               
 
 allocate(psi_Hxy_2(Imax,nyPML_2-1,Kmax))
 
