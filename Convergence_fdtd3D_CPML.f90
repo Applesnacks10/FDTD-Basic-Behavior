@@ -1,4 +1,54 @@
+program Convergence_fdtd3D_CPML
+implicit none
+
+integer, parameter :: Nr = 5
+integer :: res_array(Nr)
+logical :: pml_add
+double precision :;
+double precision :: Convergence(Nr,2), Rel_error(Nr)
+integer :: a,b !loop variables
+
+res_array(1) = 1
+res_array(2) = 2
+res_array(3) = 4
+res_array(4) = 6
+res_array(5) = 8
+
+ Convergence = 0.0
+
+do a = 1,Nr
+ do b = 1,2
+  if(b == 1)
+   pml_add = .false.
+  elseif(b == 2)
+   pml_add = .true.
+  endif
+  
+  Convergence(a,b) = fdtd3D_CPML(res_array(a), pml_add)
+  
+ enddo! 2 cpml lengths
+ 
+ Rel_error(a) = abs((Convergence(a,2) - Convergence(a,1))/Convergence(a,2))
+ 
+enddo! Nr resolutions
+
+!Transmit Relative Errors
+
+ open(file = 'Relative Errors', unit = 40)
+  do a = 1,Nr 
+   write(40,*) res_array(a), Rel_error(a)
+  enddo
+ close(unit = 40)
+  
+
+
+
+
 function fdtd3D_CPML(res, pml_add) result(P_sum)
+
+   integer, intent(in) :: res
+   logical, intent(in) :: pml_add
+   double precision, intent(out) :: P_sum
 
    double precision, parameter :: length_add = 1.0E-2 
 !  ..................................
@@ -22,13 +72,15 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
 !  Specify Number of Time Steps and Grid Size Parameters
    INTEGER, PARAMETER ::                                     &
       nmax = res*2100, &  ! total number of time steps
-      Imax = res*51+pml_add*length_add/dx, res*Jmax = 127+pml_add*length_add/dy, res*Kmax = 27+pml_add*length_add/dy
+      Imax = res*51+pml_add*length_add/dx, &
+      Jmax = res*127+pml_add*length_add/dy, &
+      Kmax = res*27+pml_add*length_add/dy
       
 !  ..................................
 !  Convergence Detection Zone
    integer, parameter :: i_start = (Imax-1)/2 - 2, i_end = (Imax-1)/2 + 2, &
                          j_start = (Jmax-1)/2 - 4, j_end = (Jmax-1)/2 + 4, &
-                         k_start = (Kmax-1)/2 - 1, k_end = (Kmax-1)/2 + 1
+                         k_start = (Kmax-1)/2 + 1, k_end = (Kmax-1)/2 + 1
      
       
    double precision, PARAMETER ::             &
@@ -249,6 +301,8 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
    psi_Hzy_2(:,:,:) = 0.0
    psi_Hzx_1(:,:,:) = 0.0
    psi_Hzx_2(:,:,:) = 0.0
+   
+   P_sum = 0.0
 
    write(*,*)"res: ", res
    write(*,*)"pml_add: ", pml_add
@@ -884,3 +938,64 @@ function fdtd3D_CPML(res, pml_add) result(P_sum)
     WRITE(*,*)"done time-stepping"
 
    end function fdtd3D_CPML
+   
+function Convergence_Collect(D, Ex, Ey, Ez, Hx, Hy, Hz, &
+                             i_start, i_end, j_start, j_end, k_start, k_end) result(P_sum)
+                             
+integer, intent(in) :: D, i_start, i_end, j_start, j_end, k_start, k_end
+
+if(D == 3)then
+double precision, intent(in) :: Ex(:,:,:), Ey(:,:,:), Ez(:,:,:), Hx(:,:,:), Hy(:,:,:), Hz(:,:,:)
+elseif(D == 2)then
+double precision, intent(in) :: Ex(:,:), Ey(:,:), Ez(:,:), Hx(:,:), Hy(:,:), Hz(:,:)
+elseif(D == 1)then
+double precision, intent(in) :: Ex(:), Ey(:), Ez(:), Hx(:), Hy(:), Hz(:)
+endif
+
+double precision, intent(out) :: P_sum
+double precision :: Px, Py, Pz
+integer :: i,j,k
+
+P_sum = 0.0
+Px = 0.0
+Py = 0.0
+Pz = 0.0
+
+if(D == 3)then !add Poynting magnitudes in 3D
+ do i = i_start,i_end
+  do j = j_start,j_end
+   do k = k_start,k_end
+    Px = Ey(i,j,k)*Hz(i,j,k) - Ez(i,j,k)*Hy(i,j,k)
+    Py = Ez(i,j,k)*Hx(i,j,k) - Ex(i,j,k)*Hz(i,j,k)
+    Pz = Ex(i,j,k)*Hy(i,j,k) - Ey(i,j,k)*Hx(i,j,k)
+    P_sum = P_sum + sqrt(Px**2 + Py**2 + Pz**2)
+   enddo
+  enddo
+ enddo
+endif
+
+if(D == 2)then !add Poynting magnitudes in 2D
+ do i = i_start,i_end
+  do j = j_start,j_end
+   Px = Ey(i,j)*Hz(i,j) - Ez(i,j)*Hy(i,j)
+   Py = Ez(i,j)*Hx(i,j) - Ex(i,j)*Hz(i,j)
+   Pz = Ex(i,j)*Hy(i,j) - Ey(i,j)*Hx(i,j)
+   P_sum = P_sum + sqrt(Px**2 + Py**2 + Pz**2) 
+  enddo
+ enddo
+endif
+
+if(D == 1)then !add Poynting magnitudes in 1D
+ do i = i_start,i_end
+  Px = Ey(i)*Hz(i) - Ez(i)*Hy(i)
+  Py = Ez(i)*Hx(i) - Ex(i)*Hz(i)
+  Pz = Ex(i)*Hy(i) - Ey(i)*Hx(i)
+  P_sum = P_sum + sqrt(Px**2 + Py**2 + Pz**2)
+ enddo
+endif
+ 
+if( D <= 0.or.D => 4 )then !returns a marked P_sum if dimension is non-Euclidean
+ P_sum = -1.0
+endif
+
+end function Convergence_Collect
