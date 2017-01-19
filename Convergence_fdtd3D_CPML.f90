@@ -18,15 +18,19 @@ do a = 1,Nr
  
  Rel_error(a) = abs((Convergence(a,2) - Convergence(a,1))/Convergence(a,1))
  
+ open(file = 'Relative Errors.dat', unit = 40)
+   write(40,*) res_array(a), Rel_error(a)
+ close(unit = 40)
+ 
 enddo! Nr resolutions
 
 !Transmit Relative Errors
 
- open(file = 'Relative Errors', unit = 40)
-  do a = 1,Nr 
-   write(40,*) res_array(a), Rel_error(a)
-  enddo
- close(unit = 40)
+! open(file = 'Relative Errors', unit = 40)
+!  do a = 1,Nr 
+!   write(40,*) res_array(a), Rel_error(a)
+!  enddo
+! close(unit = 40)
 
 !-----------------------------------------------------------------------
 !------------------------ Internal Function ----------------------------
@@ -1081,6 +1085,104 @@ P_sum_fdtd = P_sum_fdtd + P_sum/res_array(a) !res is the integration equalizer
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !.:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:.
     WRITE(*,*)"done time-stepping"
+    
+!-------------------------------------------------------------------
+!---------------------- Start of Array Deallocation ------------------
+!-------------------------------------------------------------------
+deallocate(Ez(Imax, Jmax, Kmax-1), CA(Imax, Jmax, Kmax-1), CB(Imax, Jmax, Kmax-1), sig(Imax, Jmax, Kmax-1), eps(Imax, Jmax, Kmax-1))
+
+deallocate(Hy(Imax-1, Jmax, Kmax-1))
+
+deallocate(Hx(Imax,Jmax-1, Kmax-1))
+
+deallocate(Hz(Imax-1, Jmax-1, Kmax))
+
+deallocate(Ex(Imax-1, Jmax, Kmax))
+
+deallocate(Ey(Imax,Jmax-1, Kmax))
+
+!PML
+
+deallocate(psi_Ezx_1(nxPML_1,Jmax,Kmax))
+
+deallocate(psi_Ezx_2(nxPML_2,Jmax,Kmax))
+
+deallocate(psi_Hyx_1(nxPML_1-1,Jmax,Kmax))
+
+deallocate(psi_Hyx_2(nxPML_2-1,Jmax,Kmax))
+
+deallocate(psi_Ezy_1(Imax,nyPML_1,Kmax))                               
+
+deallocate(psi_Ezy_2(Imax,nyPML_2,Kmax))
+
+deallocate(psi_Hxy_1(Imax,nyPML_1-1,Kmax))                               
+
+deallocate(psi_Hxy_2(Imax,nyPML_2-1,Kmax))
+
+deallocate(psi_Hxz_1(Imax,Jmax-1,nzPML_1-1))
+
+deallocate(psi_Hxz_2(Imax,Jmax-1,nzPML_2-1))
+
+deallocate(psi_Hyz_1(Imax-1,Jmax,nzPML_1-1))
+
+deallocate(psi_Hyz_2(Imax-1,Jmax,nzPML_2-1))
+
+deallocate(psi_Exz_1(Imax-1,Jmax,nzPML_1))
+
+deallocate(psi_Exz_2(Imax-1,Jmax,nzPML_2))
+
+deallocate(psi_Eyz_1(Imax,Jmax-1,nzPML_1))
+
+deallocate(psi_Eyz_2(Imax,Jmax-1,nzPML_2))
+
+deallocate(psi_Hzx_1(nxPML_1-1,Jmax-1,Kmax))
+
+deallocate(psi_Eyx_1(nxPML_1,Jmax-1,Kmax))
+
+deallocate(psi_Hzx_2(nxPML_2-1,Jmax-1,Kmax))
+
+deallocate(psi_Eyx_2(nxPML_2,Jmax-1,Kmax))
+
+deallocate(psi_Hzy_1(Imax-1,nyPML_1-1,Kmax))                              
+
+deallocate(psi_Exy_1(Imax-1,nyPML_1,Kmax))                               
+
+deallocate(psi_Hzy_2(Imax-1,nyPML_2-1,Kmax))
+
+deallocate(psi_Exy_2(Imax-1,nyPML_2,Kmax))
+
+deallocate(be_x_1(nxPML_1), ce_x_1(nxPML_1), alphae_x_PML_1(nxPML_1), sige_x_PML_1(nxPML_1), kappae_x_PML_1(nxPML_1))
+
+deallocate(bh_x_1(nxPML_1-1), ch_x_1(nxPML_1-1), alphah_x_PML_1(nxPML_1-1), sigh_x_PML_1(nxPML_1-1), kappah_x_PML_1(nxPML_1-1))
+
+deallocate(be_x_2(nxPML_2), ce_x_2(nxPML_2), alphae_x_PML_2(nxPML_2), sige_x_PML_2(nxPML_2), kappae_x_PML_2(nxPML_2))
+
+deallocate(bh_x_2(nxPML_2-1), ch_x_2(nxPML_2-1), alphah_x_PML_2(nxPML_2-1), sigh_x_PML_2(nxPML_2-1), kappah_x_PML_2(nxPML_2-1))
+
+deallocate(be_y_1(nyPML_1), ce_y_1(nyPML_1), alphae_y_PML_1(nyPML_1), sige_y_PML_1(nyPML_1), kappae_y_PML_1(nyPML_1))
+
+deallocate(bh_y_1(nyPML_1-1), ch_y_1(nyPML_1-1), alphah_y_PML_1(nyPML_1-1), sigh_y_PML_1(nyPML_1-1), kappah_y_PML_1(nyPML_1-1))
+
+deallocate(be_y_2(nyPML_2), ce_y_2(nyPML_2), alphae_y_PML_2(nyPML_2), sige_y_PML_2(nyPML_2), kappae_y_PML_2(nyPML_2))
+
+deallocate(bh_y_2(nyPML_2-1), ch_y_2(nyPML_2-1), alphah_y_PML_2(nyPML_2-1), sigh_y_PML_2(nyPML_2-1), kappah_y_PML_2(nyPML_2-1))
+
+deallocate(be_z_1(nzPML_1), ce_z_1(nzPML_1), alphae_z_PML_1(nzPML_1), sige_z_PML_1(nzPML_1), kappae_z_PML_1(nzPML_1))
+
+deallocate(bh_z_1(nzPML_1-1), ch_z_1(nzPML_1-1), alphah_z_PML_1(nzPML_1-1), sigh_z_PML_1(nzPML_1-1), kappah_z_PML_1(nzPML_1-1))
+
+deallocate(be_z_2(nzPML_2), ce_z_2(nzPML_2), alphae_z_PML_2(nzPML_2), sige_z_PML_2(nzPML_2), kappae_z_PML_2(nzPML_2))
+
+deallocate(bh_z_2(nzPML_2-1), ch_z_2(nzPML_2-1), alphah_z_PML_2(nzPML_2-1), sigh_z_PML_2(nzPML_2-1), kappah_z_PML_2(nzPML_2-1))
+
+!denominators for the update equations
+
+deallocate(den_ex(Imax-1), den_hx(Imax-1))
+
+deallocate(den_ey(Jmax-1), den_hy(Jmax-1))
+
+deallocate(den_ez(Kmax-1), den_hz(Kmax-1))
+
 
 end function fdtd3D_CPML
 
