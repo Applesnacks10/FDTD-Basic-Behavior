@@ -1,8 +1,8 @@
 program Convergence_fdtd3D_CPML
 implicit none
 
-integer, parameter :: Nr = 5
-integer, parameter, dimension(Nr) :: res_array = (/1,2,4,6,8/)
+integer, parameter :: Nr = 2
+integer, parameter, dimension(Nr) :: res_array = (/1,2/)
 integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
