@@ -6,7 +6,6 @@ integer, parameter, dimension(Nr) :: res_array = (/1,1/)
 integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
-double precision :: Px, Py, Pz, P_sum
  Convergence = 0.0
 
 do a = 1,Nr
@@ -40,6 +39,7 @@ enddo! Nr resolutions
 function fdtd3D_CPML() result(P_sum_fdtd)
 
    double precision :: P_sum_fdtd
+   double precision :: Px, Py, Pz, P_sum
 
    double precision, parameter :: length_add = 1.0E-2 
 !  ..................................
