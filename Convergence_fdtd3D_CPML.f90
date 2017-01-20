@@ -2,7 +2,7 @@ program Convergence_fdtd3D_CPML
 implicit none
 
 integer, parameter :: Nr = 2
-integer, parameter, dimension(Nr) :: res_array = (/1,2/)
+integer, parameter, dimension(Nr) :: res_array = (/1,1/)
 integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
@@ -267,9 +267,9 @@ function fdtd3D_CPML() result(P_sum_fdtd)
  dz = 1.0D-3/res_array(a)
  
  nmax = res_array(a)*2100
- Imax = res_array(a)*51+pml_add(b)*length_add/dx
- Jmax = res_array(a)*127+pml_add(b)*length_add/dy
- Kmax = res_array(a)*27+pml_add(b)*length_add/dy
+ Imax = res_array(a)*50+pml_add(b)*length_add/dx + 1
+ Jmax = res_array(a)*126+pml_add(b)*length_add/dy + 1
+ Kmax = res_array(a)*26+pml_add(b)*length_add/dy + 1
 
  i_start = ((Imax-1)/2 - 2)*res_array(a)
  j_start = ((Jmax-1)/2 - 4)*res_array(a)
@@ -291,7 +291,7 @@ function fdtd3D_CPML() result(P_sum_fdtd)
  jsource = jstart
  ksource = kstart
  
- nxPML_1 = res_array(a)*11+pml_add(b)*length_add/dx
+ nxPML_1 = res_array(a)*10+pml_add(b)*length_add/dx + 1
  nxPML_2 = nxPML_1
  nyPML_1 = nxPML_1
  nyPML_2 = nxPML_1
