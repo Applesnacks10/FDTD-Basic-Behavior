@@ -282,6 +282,8 @@ function fdtd3D_CPML() result(P_sum_fdtd)
  
  istart = ((Imax-1)/2-1)*res_array(a)
  iend = istart+1*res_array(a)
+ jstart = (Jmax-1)/2-10*res_array(a)
+ jend = jstart + 10*res_array(a)
  kstart = (Kmax-1)/2
  kend = kstart
  
@@ -439,7 +441,7 @@ allocate(den_ez(Kmax-1), den_hz(Kmax-1))
    write(*,*)"pml_add: ", pml_add(b)
   !bugcheck
    if(istart < 1.or. iend > Imax-1.or. jstart < 1.or. jend > Jmax-1.or. kstart < 1.or. kend > Kmax-1)then
-    write(*.*)"error -- q(end/start) reference not within range [1,Qmax-1]"
+    write(*,*)"error -- q(end/start) reference not within range [1,Qmax-1]"
    endif
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
