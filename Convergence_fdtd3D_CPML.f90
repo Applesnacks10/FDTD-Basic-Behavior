@@ -440,7 +440,7 @@ allocate(den_ez(Kmax-1), den_hz(Kmax-1))
    write(*,*)"res: ", res_array(a)
    write(*,*)"pml_add: ", pml_add(b)
   !bugcheck
-   if(istart < 1.or. iend > Imax-1.or. jstart < 1.or. jend > Imax-1.or. kstart < 1.or. kend > Imax-1)then
+   if(istart < 1.or. iend > Imax-1.or. jstart < 1.or. jend > Jmax-1.or. kstart < 1.or. kend > Kmax-1)then
     write(*.*)"error -- q(end/start) reference not within range [1,Qmax-1]"
    endif
 
