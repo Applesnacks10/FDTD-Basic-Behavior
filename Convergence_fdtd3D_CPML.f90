@@ -280,11 +280,9 @@ function fdtd3D_CPML() result(P_sum_fdtd)
      
  dt = 1.906574869531006E-12/res_array(a)
  
- istart = ((Imax-1)/2-11)*res_array(a)
- iend = istart+24*res_array(a)
- jstart = Jmax/2-49*res_array(a)
- jend = jstart + 99*res_array(a)
- kstart = Kmax/2
+ istart = ((Imax-1)/2-1)*res_array(a)
+ iend = istart+1*res_array(a)
+ kstart = (Kmax-1)/2
  kend = kstart
  
  isource = istart
