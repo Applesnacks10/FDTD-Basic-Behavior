@@ -1,45 +1,15 @@
 program Convergence_fdtd3D_CPML
 implicit none
 
-integer, parameter :: Nr = 2
-integer, parameter, dimension(Nr) :: res_array = (/1,1/)
+integer, parameter :: Nr = 3
+integer, parameter, dimension(Nr) :: res_array = (/1,2,4/)
 integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
- Convergence = 0.0
 
-do a = 1,Nr
- do b = 1,2
- 
-  Convergence(a,b) = fdtd3D_CPML()
-  
- enddo! 2 cpml lengths
- 
- Rel_error(a) = abs((Convergence(a,2) - Convergence(a,1))/Convergence(a,1))
- 
- open(file = 'Relative Errors.dat', unit = 40)
-   write(40,*) res_array(a), Rel_error(a)
- close(unit = 40)
- 
-enddo! Nr resolutions
-
-!Transmit Relative Errors
-
-! open(file = 'Relative Errors', unit = 40)
-!  do a = 1,Nr 
-!   write(40,*) res_array(a), Rel_error(a)
-!  enddo
-! close(unit = 40)
-
-!-----------------------------------------------------------------------
-!------------------------ Internal Function ----------------------------
-!-----------------------------------------------------------------------
- contains
- 
-function fdtd3D_CPML() result(P_sum_fdtd)
-
-   double precision :: P_sum_fdtd
-   double precision :: Px, Py, Pz, P_sum
+!-------------------------------------------------------------------
+!------------------------ Global Parameters ------------------------
+!-------------------------------------------------------------------
 
    double precision, parameter :: length_add = 1.0E-2 
 !  ..................................
@@ -79,9 +49,212 @@ function fdtd3D_CPML() result(P_sum_fdtd)
 
    REAL  ::                                                   &
       source, P1, P2
+   
+   REAL :: DA, DB
 
 !-------------------------------------------------------------------
-!---------------------- Start of Un-Parametrized Variables ---------
+!----------------- Minimum Resolution Variables --------------------
+!-------------------------------------------------------------------
+
+ double precision, parameter :: &
+      dx_max = 1.0D-3, dy_max =1.0D-3 , dz_max =1.0D-3
+            
+ double precision, parameter :: &
+      dt_max = 1.906574869531006E-12
+
+   INTEGER, parameter :: &
+      nmax_min = 2100,                     & 
+      Imax_min = 50  + 1,                  & 
+      Jmax_min = 126 + 1,                  & 
+      Kmax_min = 26  + 1
+      
+!  ..................................
+!  Convergence Detection Zone
+   INTEGER, parameter :: &
+      i_start_min = (Imax_min-1)/2 - 2, i_end_min = (Imax_min-1)/2 + 2,                  &
+      j_start_min = (Jmax_min-1)/2 - 4, j_end_min = (Jmax_min-1)/2 + 4,                  &
+      k_start_min = (Kmax_min-1)/2 - 1, k_end_min = (Kmax_min-1)/2 + 1
+
+   INTEGER, parameter :: &
+      istart_min = (Imax_min-1)/2-1,  iend_min = (Imax_min-1)/2,                    &
+      jstart_min = (Jmax_min-1)/2-10, jend_min = (Jmax_min-1)/2,                    &
+      kstart_min = (Kmax_min-1)/2,    kend_min = (Kmax_min-1)/2,                    &
+      isource_min = istart_min, jsource_min = jstart_min , ksource_min = kstart_min
+      
+   INTEGER, parameter :: &
+      nxPML_1_min = 10 + 1, nxPML_2_min = nxPML_1_min,                &
+      nyPML_1_min = nxPML_1_min, nyPML_2_min = nxPML_1_min,                & 
+      nzPML_1_min = nxPML_1_min, nzPML_2_min = nxPML_1_min
+      
+!-------------------------------------------------------------------
+!----------------- Maximum Resolution Variables --------------------
+!-------------------------------------------------------------------
+      
+  double precision, parameter :: &
+      dx_min = (1.0D-3)/res_array(Nr), dy_min =(1.0D-3)/res_array(Nr) , dz_min = (1.0D-3)/res_array(Nr)
+            
+ double precision, parameter :: &
+      dt_min = (1.906574869531006E-12)/res_array(Nr)
+
+   INTEGER, parameter :: &
+      nmax_max = res_array(Nr)*nmax_min,                  &                
+      Imax_max = res_array(Nr)*(Imax_min-1) + length_add/dx_min + 1,                  &
+      Jmax_max = res_array(Nr)*(Jmax_min-1) + length_add/dy_min + 1,                  & 
+      Kmax_max = res_array(Nr)*(Kmax_min-1) + length_add/dz_min + 1
+      
+!  ..................................
+!  Convergence Detection Zone
+   INTEGER, parameter :: &
+      i_start_max = (Imax_max-1)/2 - 2*res_array(Nr), i_end_max = (Imax_max-1)/2 + 2*res_array(Nr),                  &
+      j_start_max = (Jmax_max-1)/2 - 4*res_array(Nr), j_end_max = (Jmax_max-1)/2 + 4*res_array(Nr),                  &
+      k_start_max = (Kmax_max-1)/2 - 1*res_array(Nr), k_end_max = (Kmax_max-1)/2 + 1*res_array(Nr)
+
+   INTEGER, parameter :: &
+      istart_max = (Imax_max-1)/2-1*res_array(Nr),  iend_max = (Imax_max-1)/2,                    &
+      jstart_max = (Jmax_max-1)/2-10*res_array(Nr), jend_max = (Jmax_max-1)/2,                    &
+      kstart_max = (Kmax_max-1)/2*res_array(Nr),    kend_max = (Kmax_max-1)/2,                    &
+      isource_max = istart_max, jsource_max = jstart_max , ksource_max = kstart_max
+      
+   INTEGER, parameter :: &
+      nxPML_1_max = 10*res_array(Nr) + length_add/dx_min + 1, nxPML_2_max = nxPML_1_max,                &
+      nyPML_1_max = nxPML_1_max, nyPML_2_max = nxPML_1_max,                & 
+      nzPML_1_max = nxPML_1_max, nzPML_2_max = nxPML_1_max
+
+!-------------------------------------------------------------------
+!------------------------ Field and CPML Arrays --------------------
+!-------------------------------------------------------------------
+
+REAL :: Ez(Imax_max, Jmax_max, Kmax_max-1), CA(Imax_max, Jmax_max, Kmax_max-1), CB(Imax_max, Jmax_max, Kmax_max-1), &
+        sig(Imax_max, Jmax_max, Kmax_max-1), eps(Imax_max, Jmax_max, Kmax_max-1)
+
+REAL :: Hy(Imax_max-1, Jmax_max, Kmax_max-1)
+
+REAL :: Hx(Imax_max,Jmax_max-1, Kmax_max-1)
+
+REAL :: Hz(Imax_max-1, Jmax_max-1, Kmax_max)
+
+REAL :: Ex(Imax_max-1, Jmax_max, Kmax_max)
+
+REAL :: Ey(Imax_max,Jmax_max-1, Kmax_max)
+
+!PML
+
+REAL :: psi_Ezx_1(nxPML_1_max,Jmax_max,Kmax_max)
+
+REAL :: psi_Ezx_2(nxPML_2_max,Jmax_max,Kmax_max)
+
+REAL :: psi_Hyx_1(nxPML_1_max-1,Jmax_max,Kmax_max)
+
+REAL :: psi_Hyx_2(nxPML_2_max-1,Jmax_max,Kmax_max)
+
+REAL :: psi_Ezy_1(Imax_max,nyPML_1_max,Kmax_max)
+
+REAL :: psi_Ezy_2(Imax_max,nyPML_2_max,Kmax_max)
+
+REAL :: psi_Hxy_1(Imax_max,nyPML_1_max-1,Kmax_max)
+
+REAL :: psi_Hxy_2(Imax_max,nyPML_2_max-1,Kmax_max)
+
+REAL :: psi_Hxz_1(Imax_max,Jmax_max-1,nzPML_1_max-1)
+
+REAL :: psi_Hxz_2(Imax_max,Jmax_max-1,nzPML_2_max-1)
+
+REAL :: psi_Hyz_1(Imax_max-1,Jmax_max,nzPML_1_max-1)
+
+REAL :: psi_Hyz_2(Imax_max-1,Jmax_max,nzPML_2_max-1)
+
+REAL :: psi_Exz_1(Imax_max-1,Jmax_max,nzPML_1_max)
+
+REAL :: psi_Exz_2(Imax_max-1,Jmax_max,nzPML_2_max)
+
+REAL :: psi_Eyz_1(Imax_max,Jmax_max-1,nzPML_1_max)
+
+REAL :: psi_Eyz_2(Imax_max,Jmax_max-1,nzPML_2_max)
+
+REAL :: psi_Hzx_1(nxPML_1_max-1,Jmax_max-1,Kmax_max)
+
+REAL :: psi_Hzx_2(nxPML_2_max-1,Jmax_max-1,Kmax_max)
+
+REAL :: psi_Eyx_1(nxPML_1_max,Jmax_max-1,Kmax_max)
+
+REAL :: psi_Eyx_2(nxPML_2_max,Jmax_max-1,Kmax_max)
+
+REAL :: psi_Hzy_1(Imax_max-1,nyPML_1_max-1,Kmax_max)
+
+REAL :: psi_Hzy_2(Imax_max-1,nyPML_2_max-1,Kmax_max)                          
+
+REAL :: psi_Exy_1(Imax_max-1,nyPML_1_max,Kmax_max)
+
+REAL :: psi_Exy_2(Imax_max-1,nyPML_2_max,Kmax_max)                        
+
+REAL :: be_x_1(nxPML_1_max), ce_x_1(nxPML_1_max), alphae_x_PML_1(nxPML_1_max), sige_x_PML_1(nxPML_1_max), kappae_x_PML_1(nxPML_1_max)
+
+REAL :: bh_x_1(nxPML_1_max-1), ch_x_1(nxPML_1_max-1), alphah_x_PML_1(nxPML_1_max-1), sigh_x_PML_1(nxPML_1_max-1), kappah_x_PML_1(nxPML_1_max-1)
+
+REAL :: be_x_2(nxPML_2_max), ce_x_2(nxPML_2_max), alphae_x_PML_2(nxPML_2_max), sige_x_PML_2(nxPML_2_max), kappae_x_PML_2(nxPML_2_max)
+
+REAL :: bh_x_2(nxPML_2_max-1), ch_x_2(nxPML_2_max-1), alphah_x_PML_2(nxPML_2_max-1), sigh_x_PML_2(nxPML_2_max-1), kappah_x_PML_2(nxPML_2_max-1)
+
+REAL :: be_y_1(nyPML_1_max), ce_y_1(nyPML_1_max), alphae_y_PML_1(nyPML_1_max), sige_y_PML_1(nyPML_1_max), kappae_y_PML_1(nyPML_1_max)
+
+REAL :: bh_y_1(nyPML_1_max-1), ch_y_1(nyPML_1_max-1), alphah_y_PML_1(nyPML_1_max-1), sigh_y_PML_1(nyPML_1_max-1), kappah_y_PML_1(nyPML_1_max-1)
+
+REAL :: be_y_2(nyPML_2_max), ce_y_2(nyPML_2_max), alphae_y_PML_2(nyPML_2_max), sige_y_PML_2(nyPML_2_max), kappae_y_PML_2(nyPML_2_max)
+
+REAL :: bh_y_2(nyPML_2_max-1), ch_y_2(nyPML_2_max-1), alphah_y_PML_2(nyPML_2_max-1), sigh_y_PML_2(nyPML_2_max-1), kappah_y_PML_2(nyPML_2_max-1)
+
+REAL :: be_z_1(nzPML_1_max), ce_z_1(nzPML_1_max), alphae_z_PML_1(nzPML_1_max), sige_z_PML_1(nzPML_1_max), kappae_z_PML_1(nzPML_1_max)
+
+REAL :: bh_z_1(nzPML_1_max-1), ch_z_1(nzPML_1_max-1), alphah_z_PML_1(nzPML_1_max-1), sigh_z_PML_1(nzPML_1_max-1), kappah_z_PML_1(nzPML_1_max-1)
+
+REAL :: be_z_2(nzPML_2_max), ce_z_2(nzPML_2_max), alphae_z_PML_2(nzPML_2_max), sige_z_PML_2(nzPML_2_max), kappae_z_PML_2(nzPML_2_max)
+
+REAL :: bh_z_2(nzPML_2_max-1), ch_z_2(nzPML_2_max-1), alphah_z_PML_2(nzPML_2_max-1), sigh_z_PML_2(nzPML_2_max-1), kappah_z_PML_2(nzPML_2_max-1)
+
+!denominators for the update equations
+
+REAL :: den_ex(Imax_max-1), den_hx(Imax_max-1)
+
+REAL :: den_ey(Jmax_max-1), den_hy(Jmax_max-1)
+
+REAL :: den_ez(Kmax_max-1), den_hz(Kmax_max-1)
+      
+!-----------------------------------------------------------------------
+!--------------------------  Convergence Loop --------------------------
+!-----------------------------------------------------------------------
+
+ Convergence = 0.0
+
+do a = 1,Nr
+ do b = 1,2
+ 
+  Convergence(a,b) = fdtd3D_CPML()
+  
+ enddo! 2 cpml lengths
+ 
+ Rel_error(a) = abs((Convergence(a,2) - Convergence(a,1))/Convergence(a,1))
+ 
+ open(file = 'Relative Errors.dat', position = 'append', unit = 40)
+   write(40,*) res_array(a), Rel_error(a)
+ close(unit = 40)
+ 
+enddo! Nr resolutions
+
+!-----------------------------------------------------------------------
+!-----------------------------------------------------------------------
+!------------------------ Internal Function ----------------------------
+!-----------------------------------------------------------------------
+!-----------------------------------------------------------------------
+
+ contains
+ 
+function fdtd3D_CPML() result(P_sum_fdtd)
+
+   double precision :: P_sum_fdtd
+   double precision :: Px, Py, Pz, P_sum
+
+!-------------------------------------------------------------------
+!----------------------- Variable Declaration ----------------------
 !-------------------------------------------------------------------
 
 
@@ -119,282 +292,47 @@ function fdtd3D_CPML() result(P_sum_fdtd)
    INTEGER ::                         &
       nxPML_1, nxPML_2, nyPML_1,      &
       nyPML_2, nzPML_1, nzPML_2
-      
-   REAL :: DA, DB
 
 !-------------------------------------------------------------------
-!---------------------- Start of Allocatable Arrays ----------------
+!----------------------- Variable Assignment -----------------------
 !-------------------------------------------------------------------
 
-
-!     TM components
-   REAL, allocatable, DIMENSION(:,:,:)  ::                      &
-      Ez, CA, CB, sig, eps
-
-   REAL, allocatable, DIMENSION(:,:,:)  ::                      &
-      Hy
-
-   REAL, allocatable, DIMENSION(:,:,:)  ::                      &
-      Hx
-
-!     TE components
-   REAL, allocatable, DIMENSION(:,:,:)  ::                      &
-      Hz
-
-   REAL, allocatable, DIMENSION(:,:,:)  ::                      &
-      Ex
-
-   REAL, allocatable, DIMENSION(:,:,:)  ::                      &
-      Ey
-
-!  PML
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Ezx_1
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Ezx_2
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Hyx_1
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Hyx_2
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Ezy_1                               
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Ezy_2
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Hxy_1                               
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Hxy_2
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Hxz_1
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Hxz_2
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Hyz_1
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Hyz_2
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Exz_1
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Exz_2
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Eyz_1
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Eyz_2
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Hzx_1
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Eyx_1
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Hzx_2
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Eyx_2
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Hzy_1                               
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Exy_1                               
-
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Hzy_2
-   REAL , allocatable, DIMENSION(:,:,:) ::                       &
-      psi_Exy_2
-
-   REAL , allocatable, DIMENSION(:) ::                       &
-      be_x_1, ce_x_1, alphae_x_PML_1, sige_x_PML_1, kappae_x_PML_1
-   REAL , allocatable, DIMENSION(:) ::                       &
-      bh_x_1, ch_x_1, alphah_x_PML_1, sigh_x_PML_1, kappah_x_PML_1
-
-   REAL , allocatable, DIMENSION(:) ::                       &
-      be_x_2, ce_x_2, alphae_x_PML_2, sige_x_PML_2, kappae_x_PML_2
-   REAL , allocatable, DIMENSION(:) ::                       &
-      bh_x_2, ch_x_2, alphah_x_PML_2, sigh_x_PML_2, kappah_x_PML_2
-
-   REAL , allocatable, DIMENSION(:) ::                       &
-      be_y_1, ce_y_1, alphae_y_PML_1, sige_y_PML_1, kappae_y_PML_1
-   REAL , allocatable, DIMENSION(:) ::                       &
-      bh_y_1, ch_y_1, alphah_y_PML_1, sigh_y_PML_1, kappah_y_PML_1
-
-   REAL , allocatable, DIMENSION(:) ::                       &
-      be_y_2, ce_y_2, alphae_y_PML_2, sige_y_PML_2, kappae_y_PML_2
-   REAL , allocatable, DIMENSION(:) ::                       &
-      bh_y_2, ch_y_2, alphah_y_PML_2, sigh_y_PML_2, kappah_y_PML_2
-
-   REAL , allocatable, DIMENSION(:) ::                       &
-      be_z_1, ce_z_1, alphae_z_PML_1, sige_z_PML_1, kappae_z_PML_1
-   REAL , allocatable, DIMENSION(:) ::                       &
-      bh_z_1, ch_z_1, alphah_z_PML_1, sigh_z_PML_1, kappah_z_PML_1
-
-   REAL , allocatable, DIMENSION(:) ::                       &
-      be_z_2, ce_z_2, alphae_z_PML_2, sige_z_PML_2, kappae_z_PML_2
-   REAL , allocatable, DIMENSION(:) ::                       &
-      bh_z_2, ch_z_2, alphah_z_PML_2, sigh_z_PML_2, kappah_z_PML_2
-
-!     denominators for the update equations
-   REAL, allocatable, DIMENSION(:)  ::                      &
-      den_ex, den_hx
-
-   REAL, allocatable, DIMENSION(:)  ::                      &
-      den_ey, den_hy
-
-   REAL, allocatable, DIMENSION(:)  ::                      &
-      den_ez, den_hz
-      
-      
-      
-!-------------------------------------------------------------------
-!---------------------- Start of Variable Assignment ---------------
-!-------------------------------------------------------------------
-
- dx = 1.0D-3/res_array(a)
- dy = 1.0D-3/res_array(a)
- dz = 1.0D-3/res_array(a)
+ dx = dx_max/res_array(a)
+ dy = dy_max/res_array(a)
+ dz = dz_max/res_array(a)
  
- nmax = res_array(a)*2100
- Imax = res_array(a)*50+pml_add(b)*length_add/dx + 1
- Jmax = res_array(a)*126+pml_add(b)*length_add/dy + 1
- Kmax = res_array(a)*26+pml_add(b)*length_add/dy + 1
+ nmax = res_array(a)*nmax_min
+ Imax = res_array(a)*(Imax_min-1) + pml_add(b)*length_add/dx + 1
+ Jmax = res_array(a)*(Jmax_min-1) + pml_add(b)*length_add/dy + 1
+ Kmax = res_array(a)*(Kmax_min-1) + pml_add(b)*length_add/dz + 1
 
- i_start = ((Imax-1)/2 - 2)*res_array(a)
- j_start = ((Jmax-1)/2 - 4)*res_array(a)
- k_start = ((Kmax-1)/2 - 1)*res_array(a)
- i_end = ((Imax-1)/2 + 2)*res_array(a)    
- j_end = ((Jmax-1)/2 + 4)*res_array(a)
- k_end = ((Kmax-1)/2 + 1)*res_array(a)
-     
+ i_start = (Imax-1)/2 - 2*res_array(a)
+ j_start = (Jmax-1)/2 - 4*res_array(a)
+ k_start = (Kmax-1)/2 - 1*res_array(a)
+ i_end   = (Imax-1)/2 + 2*res_array(a)   
+ j_end   = (Jmax-1)/2 + 4*res_array(a)
+ k_end   = (Kmax-1)/2 + 1*res_array(a)
+
  dt = 1.906574869531006E-12/res_array(a)
  
- istart = ((Imax-1)/2-1)*res_array(a)
- iend = istart+1*res_array(a)
- jstart = (Jmax-1)/2-10*res_array(a)
- jend = jstart + 10*res_array(a)
+ istart = (Imax-1)/2 - 1*res_array(a)
+ iend   = (Imax-1)/2 + 1*res_array(a)
+ jstart = (Jmax-1)/2 - 10*res_array(a)
+ jend   = (Jmax-1)/2 + 10*res_array(a)
  kstart = (Kmax-1)/2
- kend = kstart
+ kend   = (Kmax-1)/2
  
  isource = istart
  jsource = jstart
  ksource = kstart
  
- nxPML_1 = res_array(a)*10+pml_add(b)*length_add/dx + 1
- nxPML_2 = nxPML_1
- nyPML_1 = nxPML_1
- nyPML_2 = nxPML_1
- nzPML_1 = nxPML_1
- nzPML_2 = nxPML_2
+ nxPML_1 = res_array(a)*(nxPML_1_min-1) + pml_add(b)*length_add/dx + 1
+ nxPML_2 = res_array(a)*(nxPML_2_min-1) + pml_add(b)*length_add/dx + 1
+ nyPML_1 = res_array(a)*(nyPML_1_min-1) + pml_add(b)*length_add/dy + 1
+ nyPML_2 = res_array(a)*(nyPML_2_min-1) + pml_add(b)*length_add/dy + 1
+ nzPML_1 = res_array(a)*(nzPML_1_min-1) + pml_add(b)*length_add/dz + 1
+ nzPML_2 = res_array(a)*(nzPML_2_min-1) + pml_add(b)*length_add/dz + 1
  
-!-------------------------------------------------------------------
-!---------------------- Start of Array Allocation ------------------
-!-------------------------------------------------------------------
-allocate(Ez(Imax, Jmax, Kmax-1), CA(Imax, Jmax, Kmax-1), CB(Imax, Jmax, Kmax-1), sig(Imax, Jmax, Kmax-1), eps(Imax, Jmax, Kmax-1))
-
-allocate(Hy(Imax-1, Jmax, Kmax-1))
-
-allocate(Hx(Imax,Jmax-1, Kmax-1))
-
-allocate(Hz(Imax-1, Jmax-1, Kmax))
-
-allocate(Ex(Imax-1, Jmax, Kmax))
-
-allocate(Ey(Imax,Jmax-1, Kmax))
-
-!PML
-
-allocate(psi_Ezx_1(nxPML_1,Jmax,Kmax))
-
-allocate(psi_Ezx_2(nxPML_2,Jmax,Kmax))
-
-allocate(psi_Hyx_1(nxPML_1-1,Jmax,Kmax))
-
-allocate(psi_Hyx_2(nxPML_2-1,Jmax,Kmax))
-
-allocate(psi_Ezy_1(Imax,nyPML_1,Kmax))                               
-
-allocate(psi_Ezy_2(Imax,nyPML_2,Kmax))
-
-allocate(psi_Hxy_1(Imax,nyPML_1-1,Kmax))                               
-
-allocate(psi_Hxy_2(Imax,nyPML_2-1,Kmax))
-
-allocate(psi_Hxz_1(Imax,Jmax-1,nzPML_1-1))
-
-allocate(psi_Hxz_2(Imax,Jmax-1,nzPML_2-1))
-
-allocate(psi_Hyz_1(Imax-1,Jmax,nzPML_1-1))
-
-allocate(psi_Hyz_2(Imax-1,Jmax,nzPML_2-1))
-
-allocate(psi_Exz_1(Imax-1,Jmax,nzPML_1))
-
-allocate(psi_Exz_2(Imax-1,Jmax,nzPML_2))
-
-allocate(psi_Eyz_1(Imax,Jmax-1,nzPML_1))
-
-allocate(psi_Eyz_2(Imax,Jmax-1,nzPML_2))
-
-allocate(psi_Hzx_1(nxPML_1-1,Jmax-1,Kmax))
-
-allocate(psi_Eyx_1(nxPML_1,Jmax-1,Kmax))
-
-allocate(psi_Hzx_2(nxPML_2-1,Jmax-1,Kmax))
-
-allocate(psi_Eyx_2(nxPML_2,Jmax-1,Kmax))
-
-allocate(psi_Hzy_1(Imax-1,nyPML_1-1,Kmax))                              
-
-allocate(psi_Exy_1(Imax-1,nyPML_1,Kmax))                               
-
-allocate(psi_Hzy_2(Imax-1,nyPML_2-1,Kmax))
-
-allocate(psi_Exy_2(Imax-1,nyPML_2,Kmax))
-
-allocate(be_x_1(nxPML_1), ce_x_1(nxPML_1), alphae_x_PML_1(nxPML_1), sige_x_PML_1(nxPML_1), kappae_x_PML_1(nxPML_1))
-
-allocate(bh_x_1(nxPML_1-1), ch_x_1(nxPML_1-1), alphah_x_PML_1(nxPML_1-1), sigh_x_PML_1(nxPML_1-1), kappah_x_PML_1(nxPML_1-1))
-
-allocate(be_x_2(nxPML_2), ce_x_2(nxPML_2), alphae_x_PML_2(nxPML_2), sige_x_PML_2(nxPML_2), kappae_x_PML_2(nxPML_2))
-
-allocate(bh_x_2(nxPML_2-1), ch_x_2(nxPML_2-1), alphah_x_PML_2(nxPML_2-1), sigh_x_PML_2(nxPML_2-1), kappah_x_PML_2(nxPML_2-1))
-
-allocate(be_y_1(nyPML_1), ce_y_1(nyPML_1), alphae_y_PML_1(nyPML_1), sige_y_PML_1(nyPML_1), kappae_y_PML_1(nyPML_1))
-
-allocate(bh_y_1(nyPML_1-1), ch_y_1(nyPML_1-1), alphah_y_PML_1(nyPML_1-1), sigh_y_PML_1(nyPML_1-1), kappah_y_PML_1(nyPML_1-1))
-
-allocate(be_y_2(nyPML_2), ce_y_2(nyPML_2), alphae_y_PML_2(nyPML_2), sige_y_PML_2(nyPML_2), kappae_y_PML_2(nyPML_2))
-
-allocate(bh_y_2(nyPML_2-1), ch_y_2(nyPML_2-1), alphah_y_PML_2(nyPML_2-1), sigh_y_PML_2(nyPML_2-1), kappah_y_PML_2(nyPML_2-1))
-
-allocate(be_z_1(nzPML_1), ce_z_1(nzPML_1), alphae_z_PML_1(nzPML_1), sige_z_PML_1(nzPML_1), kappae_z_PML_1(nzPML_1))
-
-allocate(bh_z_1(nzPML_1-1), ch_z_1(nzPML_1-1), alphah_z_PML_1(nzPML_1-1), sigh_z_PML_1(nzPML_1-1), kappah_z_PML_1(nzPML_1-1))
-
-allocate(be_z_2(nzPML_2), ce_z_2(nzPML_2), alphae_z_PML_2(nzPML_2), sige_z_PML_2(nzPML_2), kappae_z_PML_2(nzPML_2))
-
-allocate(bh_z_2(nzPML_2-1), ch_z_2(nzPML_2-1), alphah_z_PML_2(nzPML_2-1), sigh_z_PML_2(nzPML_2-1), kappah_z_PML_2(nzPML_2-1))
-
-!denominators for the update equations
-
-allocate(den_ex(Imax-1), den_hx(Imax-1))
-
-allocate(den_ey(Jmax-1), den_hy(Jmax-1))
-
-allocate(den_ez(Kmax-1), den_hz(Kmax-1))
-
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !  INITIALIZE VARIABLES
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -447,7 +385,7 @@ allocate(den_ez(Kmax-1), den_hz(Kmax-1))
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !  SET CPML PARAMETERS IN EACH DIRECTION
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   DO i = 1,nxPML_1
+   DO i = 1,nxPML_1_max
       sige_x_PML_1(i) = sig_x_max * ( (nxPML_1 - i) / (nxPML_1 - 1.0) )**m
       alphae_x_PML_1(i) = alpha_x_max*((i-1.0)/(nxPML_1-1.0))**ma
       kappae_x_PML_1(i) = 1.0+(kappa_x_max-1.0)*   &
@@ -1090,96 +1028,6 @@ P_sum_fdtd = P_sum_fdtd + P_sum/(res_array(a))**3 !res is the integration equali
 !.:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:.
     WRITE(*,*)"done time-stepping"
     
-!-------------------------------------------------------------------
-!---------------------- Start of Array Deallocation ------------------
-!-------------------------------------------------------------------
-deallocate(CA, CB, sig, eps)
-
-deallocate(Hy, Hx, Hz, Ex, Ey, Ez)
-
-!PML
-
-deallocate(psi_Ezx_1)
-
-deallocate(psi_Ezx_2)
-
-deallocate(psi_Hyx_1)
-
-deallocate(psi_Hyx_2)
-
-deallocate(psi_Ezy_1)                               
-
-deallocate(psi_Ezy_2)
-
-deallocate(psi_Hxy_1)                               
-
-deallocate(psi_Hxy_2)
-
-deallocate(psi_Hxz_1)
-
-deallocate(psi_Hxz_2)
-
-deallocate(psi_Hyz_1)
-
-deallocate(psi_Hyz_2)
-
-deallocate(psi_Exz_1)
-
-deallocate(psi_Exz_2)
-
-deallocate(psi_Eyz_1)
-
-deallocate(psi_Eyz_2)
-
-deallocate(psi_Hzx_1)
-
-deallocate(psi_Eyx_1)
-
-deallocate(psi_Hzx_2)
-
-deallocate(psi_Eyx_2)
-
-deallocate(psi_Hzy_1)                              
-
-deallocate(psi_Exy_1)                               
-
-deallocate(psi_Hzy_2)
-
-deallocate(psi_Exy_2)
-
-deallocate(be_x_1, ce_x_1, alphae_x_PML_1, sige_x_PML_1, kappae_x_PML_1)
-
-deallocate(bh_x_1, ch_x_1, alphah_x_PML_1, sigh_x_PML_1, kappah_x_PML_1)
-
-deallocate(be_x_2, ce_x_2, alphae_x_PML_2, sige_x_PML_2, kappae_x_PML_2)
-
-deallocate(bh_x_2, ch_x_2, alphah_x_PML_2, sigh_x_PML_2, kappah_x_PML_2)
-
-deallocate(be_y_1, ce_y_1, alphae_y_PML_1, sige_y_PML_1, kappae_y_PML_1)
-
-deallocate(bh_y_1, ch_y_1, alphah_y_PML_1, sigh_y_PML_1, kappah_y_PML_1)
-
-deallocate(be_y_2, ce_y_2, alphae_y_PML_2, sige_y_PML_2, kappae_y_PML_2)
-
-deallocate(bh_y_2, ch_y_2, alphah_y_PML_2, sigh_y_PML_2, kappah_y_PML_2)
-
-deallocate(be_z_1, ce_z_1, alphae_z_PML_1, sige_z_PML_1, kappae_z_PML_1)
-
-deallocate(bh_z_1, ch_z_1, alphah_z_PML_1, sigh_z_PML_1, kappah_z_PML_1)
-
-deallocate(be_z_2, ce_z_2, alphae_z_PML_2, sige_z_PML_2, kappae_z_PML_2)
-
-deallocate(bh_z_2, ch_z_2, alphah_z_PML_2, sigh_z_PML_2, kappah_z_PML_2)
-
-!denominators for the update equations
-
-deallocate(den_ex, den_hx)
-
-deallocate(den_ey, den_hy)
-
-deallocate(den_ez, den_hz)
-
-
 end function fdtd3D_CPML
 
 end !Main
