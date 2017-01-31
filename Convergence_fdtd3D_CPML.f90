@@ -187,29 +187,29 @@ REAL :: psi_Exy_1(Imax_max-1,nyPML_1_max,Kmax_max)
 
 REAL :: psi_Exy_2(Imax_max-1,nyPML_2_max,Kmax_max)                        
 
-REAL :: be_x_1(nxPML_1_max), ce_x_1(nxPML_1_max), alphae_x_PML_1(nxPML_1_max), sige_x_PML_1(nxPML_1_max), kappae_x_PML_1(nxPML_1_max)
+REAL :: be_x_1((nxPML_1_max)), ce_x_1((nxPML_1_max)), alphae_x_PML_1((nxPML_1_max)), sige_x_PML_1((nxPML_1_max)), kappae_x_PML_1((nxPML_1_max))
 
-REAL :: bh_x_1(nxPML_1_max-1), ch_x_1(nxPML_1_max-1), alphah_x_PML_1(nxPML_1_max-1), sigh_x_PML_1(nxPML_1_max-1), kappah_x_PML_1(nxPML_1_max-1)
+REAL :: bh_x_1((nxPML_1_max-1)), ch_x_1((nxPML_1_max-1)), alphah_x_PML_1((nxPML_1_max-1)), sigh_x_PML_1((nxPML_1_max-1)), kappah_x_PML_1((nxPML_1_max-1))
 
-REAL :: be_x_2(nxPML_2_max), ce_x_2(nxPML_2_max), alphae_x_PML_2(nxPML_2_max), sige_x_PML_2(nxPML_2_max), kappae_x_PML_2(nxPML_2_max)
+REAL :: be_x_2(nxPML_2_max), ce_x_2((nxPML_2_max)), alphae_x_PML_2((nxPML_2_max)), sige_x_PML_2((nxPML_2_max)), kappae_x_PML_2((nxPML_2_max))
 
-REAL :: bh_x_2(nxPML_2_max-1), ch_x_2(nxPML_2_max-1), alphah_x_PML_2(nxPML_2_max-1), sigh_x_PML_2(nxPML_2_max-1), kappah_x_PML_2(nxPML_2_max-1)
+REAL :: bh_x_2((nxPML_2_max-1)), ch_x_2((nxPML_2_max-1)), alphah_x_PML_2((nxPML_2_max-1)), sigh_x_PML_2((nxPML_2_max-1)), kappah_x_PML_2((nxPML_2_max-1))
 
-REAL :: be_y_1(nyPML_1_max), ce_y_1(nyPML_1_max), alphae_y_PML_1(nyPML_1_max), sige_y_PML_1(nyPML_1_max), kappae_y_PML_1(nyPML_1_max)
+REAL :: be_y_1((nyPML_1_max)), ce_y_1((nyPML_1_max)), alphae_y_PML_1((nyPML_1_max)), sige_y_PML_1((nyPML_1_max)), kappae_y_PML_1((nyPML_1_max))
 
-REAL :: bh_y_1(nyPML_1_max-1), ch_y_1(nyPML_1_max-1), alphah_y_PML_1(nyPML_1_max-1), sigh_y_PML_1(nyPML_1_max-1), kappah_y_PML_1(nyPML_1_max-1)
+REAL :: bh_y_1((nyPML_1_max-1)), ch_y_1((nyPML_1_max-1)), alphah_y_PML_1((nyPML_1_max-1)), sigh_y_PML_1((nyPML_1_max-1)), kappah_y_PML_1((nyPML_1_max-1))
 
-REAL :: be_y_2(nyPML_2_max), ce_y_2(nyPML_2_max), alphae_y_PML_2(nyPML_2_max), sige_y_PML_2(nyPML_2_max), kappae_y_PML_2(nyPML_2_max)
+REAL :: be_y_2((nyPML_2_max)), ce_y_2((nyPML_2_max)), alphae_y_PML_2((nyPML_2_max)), sige_y_PML_2((nyPML_2_max)), kappae_y_PML_2((nyPML_2_max))
 
-REAL :: bh_y_2(nyPML_2_max-1), ch_y_2(nyPML_2_max-1), alphah_y_PML_2(nyPML_2_max-1), sigh_y_PML_2(nyPML_2_max-1), kappah_y_PML_2(nyPML_2_max-1)
+REAL :: bh_y_2((nyPML_2_max-1)), ch_y_2((nyPML_2_max-1)), alphah_y_PML_2((nyPML_2_max-1)), sigh_y_PML_2((nyPML_2_max-1)), kappah_y_PML_2((nyPML_2_max-1))
 
-REAL :: be_z_1(nzPML_1_max), ce_z_1(nzPML_1_max), alphae_z_PML_1(nzPML_1_max), sige_z_PML_1(nzPML_1_max), kappae_z_PML_1(nzPML_1_max)
+REAL :: be_z_1((nzPML_1_max)), ce_z_1((nzPML_1_max)), alphae_z_PML_1((nzPML_1_max)), sige_z_PML_1((nzPML_1_max)), kappae_z_PML_1((nzPML_1_max))
 
-REAL :: bh_z_1(nzPML_1_max-1), ch_z_1(nzPML_1_max-1), alphah_z_PML_1(nzPML_1_max-1), sigh_z_PML_1(nzPML_1_max-1), kappah_z_PML_1(nzPML_1_max-1)
+REAL :: bh_z_1((nzPML_1_max-1)), ch_z_1((nzPML_1_max-1)), alphah_z_PML_1((nzPML_1_max-1)), sigh_z_PML_1((nzPML_1_max-1)), kappah_z_PML_1((nzPML_1_max-1))
 
-REAL :: be_z_2(nzPML_2_max), ce_z_2(nzPML_2_max), alphae_z_PML_2(nzPML_2_max), sige_z_PML_2(nzPML_2_max), kappae_z_PML_2(nzPML_2_max)
+REAL :: be_z_2((nzPML_2_max)), ce_z_2((nzPML_2_max)), alphae_z_PML_2((nzPML_2_max)), sige_z_PML_2((nzPML_2_max)), kappae_z_PML_2((nzPML_2_max))
 
-REAL :: bh_z_2(nzPML_2_max-1), ch_z_2(nzPML_2_max-1), alphah_z_PML_2(nzPML_2_max-1), sigh_z_PML_2(nzPML_2_max-1), kappah_z_PML_2(nzPML_2_max-1)
+REAL :: bh_z_2((nzPML_2_max-1)), ch_z_2((nzPML_2_max-1)), alphah_z_PML_2((nzPML_2_max-1)), sigh_z_PML_2((nzPML_2_max-1)), kappah_z_PML_2((nzPML_2_max-1))
 
 !denominators for the update equations
 
