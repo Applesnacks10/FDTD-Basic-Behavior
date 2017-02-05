@@ -1,7 +1,16 @@
 function Convergence_Collect(D, Ex, Ey, Ez, Hx, Hy, Hz, &
                              i_start, i_end, j_start, j_end, k_start, k_end) result(P_sum)
-double precision, intent(in) :: Ex, Ey, Ez, Hx, Hy, Hz
+                             
 integer, intent(in) :: D, i_start, i_end, j_start, j_end, k_start, k_end
+
+if(D == 3)then
+double precision, intent(in) :: Ex(:,:,:), Ey(:,:,:), Ez(:,:,:), Hx(:,:,:), Hy(:,:,:), Hz(:,:,:)
+elseif(D == 2)then
+double precision, intent(in) :: Ex(:,:), Ey(:,:), Ez(:,:), Hx(:,:), Hy(:,:), Hz(:,:)
+elseif(D == 1)then
+double precision, intent(in) :: Ex(:), Ey(:), Ez(:), Hx(:), Hy(:), Hz(:)
+endif
+
 double precision, intent(out) :: P_sum
 double precision :: Px, Py, Pz
 integer :: i,j,k
@@ -44,7 +53,7 @@ if(D == 1)then !add Poynting magnitudes in 1D
  enddo
 endif
  
-if( D >= 4.or.D <= 0 )then !returns a marked P_sum if dimension is non-Euclidean
+if( D <= 0.or.D => 4 )then !returns a marked P_sum if dimension is non-Euclidean
  P_sum = -1.0
 endif
 

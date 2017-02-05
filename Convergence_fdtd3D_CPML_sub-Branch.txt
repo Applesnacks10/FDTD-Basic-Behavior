@@ -1,0 +1,3 @@
+Here, I will implement the Convergence test on the code fdtd3D_CPML, which is suspected to have a
+correct CPML. I will attempt to convert fdtd_3D into a function, then nest it inside the Convergence
+loops for varying resolution and varying cpml-length. 
