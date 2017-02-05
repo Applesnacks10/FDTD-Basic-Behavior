@@ -48,126 +48,112 @@ integer :: a,b !loop variables
    INTEGER ::                                                &
 	i,j,ii,jj,k,kk,n
 
-   REAL  ::                                                   &
+   double precision  ::                                                   &
       source, P1, P2
    
-   REAL :: DA, DB
+   double precision :: DA, DB
 
 !-------------------------------------------------------------------
 !----------------- Minimum Resolution Variables --------------------
 !-------------------------------------------------------------------
 
  double precision, parameter :: &
-      dx_max = 1.0D-3, dy_max =1.0D-3 , dz_max =1.0D-3
+      dx_max = , dy_max = 
             
  double precision, parameter :: &
-      dt_max = 1.906574869531006E-12
+      dt_max =
 
    INTEGER, parameter :: &
-      nmax_min = 2100,                     & 
-      Nx_min = 50  + 1,                  & 
-      Ny_min = 126 + 1,                  & 
-      Kmax_min = 26  + 1
+      nmax_min =,                     & 
+      Nx_min =  + 1,                  & 
+      Ny_min =  + 1,                  &
+      N_loc_min = ceiling(real((Ny_min - 1))/real(nprocs))
       
 !  ..................................
 !  Convergence Detection Zone
    INTEGER, parameter :: &
       i_start_min = (Nx_min-1)/2 - 2, i_end_min = (Nx_min-1)/2 + 2,                  &
-      j_start_min = (Ny_min-1)/2 - 4, j_end_min = (Ny_min-1)/2 + 4,                  &
-      k_start_min = (Kmax_min-1)/2 - 1, k_end_min = (Kmax_min-1)/2 + 1
+      j_start_min = (N_loc_min-1)/2 - 4, j_end_min = (N_loc_min-1)/2 + 4,                  &
 
    INTEGER, parameter :: &
       istart_min = (Nx_min-1)/2-1,  iend_min = (Nx_min-1)/2,                    &
-      jstart_min = (Ny_min-1)/2-10, jend_min = (Ny_min-1)/2,                    &
-      kstart_min = (Kmax_min-1)/2,    kend_min = (Kmax_min-1)/2,                    &
-      isource_min = istart_min, jsource_min = jstart_min , ksource_min = kstart_min
+      jstart_min = (N_loc_min-1)/2-10, jend_min = (N_loc_min-1)/2,                    &                  &
+      isource_min = istart_min, jsource_min = jstart_min
       
    INTEGER, parameter :: &
-      npml_min = 10 + 1, npml_min = npml_min,                &
-      npml_min = npml_min, npml_min = npml_min,                & 
-      nzPML_1_min = npml_min, nzPML_2_min = npml_min
+      npml_min = 10 + 1
       
 !-------------------------------------------------------------------
 !----------------- Maximum Resolution Variables --------------------
 !-------------------------------------------------------------------
       
   double precision, parameter :: &
-      dx_min = (1.0D-3)/res_array(Nr), dy_min =(1.0D-3)/res_array(Nr) , dz_min = (1.0D-3)/res_array(Nr)
+      dx_min = (dx_max)/res_array(Nr), dy_min =(dy_max)/res_array(Nr)
             
  double precision, parameter :: &
-      dt_min = (1.906574869531006E-12)/res_array(Nr)
+      dt_min = (dt_max)/res_array(Nr)
 
    INTEGER, parameter :: &
       nmax_max = res_array(Nr)*nmax_min,                  &                
       Nx_max = res_array(Nr)*(Nx_min-1) + length_add/dx_min + 1,                  &
-      Ny_max = res_array(Nr)*(Ny_min-1) + length_add/dy_min + 1,                  & 
-      Kmax_max = res_array(Nr)*(Kmax_min-1) + length_add/dz_min + 1
+      Ny_max = res_array(Nr)*(Ny_min-1) + length_add/dy_min + 1,                  &
+      N_loc_max = ceiling(real((Ny_max - 1))/real(nprocs))
       
 !  ..................................
 !  Convergence Detection Zone
    INTEGER, parameter :: &
       i_start_max = (Nx_max-1)/2 - 2*res_array(Nr), i_end_max = (Nx_max-1)/2 + 2*res_array(Nr),                  &
-      j_start_max = (Ny_max-1)/2 - 4*res_array(Nr), j_end_max = (Ny_max-1)/2 + 4*res_array(Nr),                  &
-      k_start_max = (Kmax_max-1)/2 - 1*res_array(Nr), k_end_max = (Kmax_max-1)/2 + 1*res_array(Nr)
+      j_start_max = (N_loc_max-1)/2 - 4*res_array(Nr), j_end_max = (N_loc_max-1)/2 + 4*res_array(Nr),                  &
 
    INTEGER, parameter :: &
       istart_max = (Nx_max-1)/2-1*res_array(Nr),  iend_max = (Nx_max-1)/2,                    &
       jstart_max = (Ny_max-1)/2-10*res_array(Nr), jend_max = (Ny_max-1)/2,                    &
-      kstart_max = (Kmax_max-1)/2*res_array(Nr),    kend_max = (Kmax_max-1)/2,                    &
-      isource_max = istart_max, jsource_max = jstart_max , ksource_max = kstart_max
+      isource_max = istart_max, jsource_max = jstart_max
       
    INTEGER, parameter :: &
-      npml_max = 10*res_array(Nr) + length_add/dx_min + 1, npml_max = npml_max,                &
-      npml_max = npml_max, npml_max = npml_max,                & 
-      nzPML_1_max = npml_max, nzPML_2_max = npml_max
+      npml_max = 10*res_array(Nr) + length_add/dx_min + 1
 
 !-------------------------------------------------------------------
 !------------------------ Field and CPML Arrays --------------------
 !-------------------------------------------------------------------
 
-REAL :: Hz(Nx_max-1, Ny_max-1, Kmax_max)
+double precision :: Hz(Nx_max-1, N_loc_max)
 
-REAL :: Ex(Nx_max-1, Ny_max, Kmax_max)
+double precision :: Ex(Nx_max-1, N_loc_max)
 
-REAL :: Ey(Nx_max,Ny_max-1, Kmax_max)
+double precision :: Ey(Nx_max, N_loc_max)
 
 !PML
 
-REAL :: psi_Hzx_1(npml_max-1,Ny_max-1)
+double precision :: psi_Hzx_1(npml_max-1,N_loc_max)
 
-REAL :: psi_Hzx_2(npml_max-1,Ny_max-1)
+double precision :: psi_Hzx_2(npml_max-1,N_loc_max)
 
-REAL :: psi_Eyx_1(npml_max,Ny_max-1)
+double precision :: psi_Eyx_1(npml_max,N_loc_max)
 
-REAL :: psi_Eyx_2(npml_max,Ny_max-1)
+double precision :: psi_Eyx_2(npml_max,N_loc_max)
 
-REAL :: psi_Hzy_1(Nx_max-1,npml_max-1)
+double precision :: psi_Hzy_1(Nx_max-1,npml_max-1)
 
-REAL :: psi_Hzy_2(Nx_max-1,npml_max-1)                          
+double precision :: psi_Hzy_2(Nx_max-1,npml_max-1)                          
 
-REAL :: psi_Exy_1(Nx_max-1,npml_max)
+double precision :: psi_Exy_1(Nx_max-1,npml_max)
 
-REAL :: psi_Exy_2(Nx_max-1,npml_max)                        
+double precision :: psi_Exy_2(Nx_max-1,npml_max)                        
 
-REAL :: be_x_1((npml_max)), ce_x_1((npml_max)), alphae_x_PML_1((npml_max)), sige_x_PML_1((npml_max)), kappae_x_PML_1((npml_max))
+double precision :: bh_x(npml_max-1), ch_x(npml_max-1), alphah_x(npml_max-1), sigh_x(npml_max-1), kappah_x(npml_max-1)
 
-REAL :: be_x_2(npml_max), ce_x_2((npml_max)), alphae_x_PML_2((npml_max)), sige_x_PML_2((npml_max)), kappae_x_PML_2((npml_max))
+double precision :: be_x(npml_max), ce_x(npml_max), alphae_x(npml_max), sige_x(npml_max), kappae_x(npml_max)
 
-REAL :: be_y_1((npml_max)), ce_y_1((npml_max)), alphae_y_PML_1((npml_max)), sige_y_PML_1((npml_max)), kappae_y_PML_1((npml_max))
+double precision :: bh_y(npml_max-1), ch_y(npml_max-1), alphah_y(npml_max-1), sigh_y(npml_max-1), kappah_y(npml_max-1)
 
-REAL :: be_y_2((npml_max)), ce_y_2((npml_max)), alphae_y_PML_2((npml_max)), sige_y_PML_2((npml_max)), kappae_y_PML_2((npml_max))
-
-REAL :: bh_z_1((nzPML_1_max-1)), ch_z_1((nzPML_1_max-1)), alphah_z_PML_1((nzPML_1_max-1)), sigh_z_PML_1((nzPML_1_max-1)), kappah_z_PML_1((nzPML_1_max-1))
-
-REAL :: bh_z_2((nzPML_2_max-1)), ch_z_2((nzPML_2_max-1)), alphah_z_PML_2((nzPML_2_max-1)), sigh_z_PML_2((nzPML_2_max-1)), kappah_z_PML_2((nzPML_2_max-1))
+double precision :: be_y(npml_max), ce_y(npml_max), alphae_y(npml_max), sige_y(npml_max), kappae_y(npml_max)
 
 !denominators for the update equations
 
-REAL :: den_ex(Nx_max-1), den_h_z(Nx_max-1)
+double precision :: den_ex(Nx_max-1), den_hx(Nx_max-1)
 
-REAL :: den_ey(Ny_max-1), den_h_z(Ny_max-1)
-
-REAL :: den_h_z(Kmax_max-1), den_hz(Kmax_max-1)
+double precision :: den_ey(N_loc_max), den_hy(N_loc_max)
       
 !-----------------------------------------------------------------------
 !--------------------------  Convergence Loop --------------------------
@@ -198,7 +184,7 @@ enddo! Nr resolutions
 
  contains
  
-function fdtd3D_CPML() result(P_sum_fdtd)
+function Vacuum_CPML() result(P_sum_fdtd)
 
    double precision :: P_sum_fdtd
    double precision :: Px, Py, Pz, P_sum
@@ -212,18 +198,16 @@ function fdtd3D_CPML() result(P_sum_fdtd)
 !  Specify Grid Cell Size in Each Direction and Calculate the 
 !  Resulting Courant-Stable Time Step
    double precision ::                                        &
-      dx, dy, dz
-
+      dx, dy
 !  ..................................
 !  Specify Number of Time Steps and Grid Size Parameters
    INTEGER ::                                     &
-      nmax, Nx, Ny, Kmax
+      nmax, Nx, Ny, N_loc
       
 !  ..................................
 !  Convergence Detection Zone
    integer :: i_start, i_end, &
               j_start, j_end, &
-              k_start, k_end
      
       
    double precision ::             &
@@ -232,16 +216,14 @@ function fdtd3D_CPML() result(P_sum_fdtd)
 !  ..................................
 !  Specify the PEC Plate Boundaries and the Source/Recording Points
    INTEGER ::                                    &
-      istart, iend, jstart,   &
-      jend, kstart, kend,    &
-      isource, jsource, ksource
-
+      istart, iend, jstart, jend,                       &
+      isource, jsource
 !  ..................................
 !  Specify the CPML Thickness in Each Direction (Value of Zero 
 !  Corresponds to No PML, and the Grid is Terminated with a PEC)
-   INTEGER ::                         &
-      npml, npml, npml,      &
-      npml, nzPML_1, nzPML_2
+   INTEGER ::
+      npml
+
 
 !-------------------------------------------------------------------
 !----------------------- Variable Assignment -----------------------
@@ -249,32 +231,26 @@ function fdtd3D_CPML() result(P_sum_fdtd)
 
  dx = dx_max/res_array(a)
  dy = dy_max/res_array(a)
- dz = dz_max/res_array(a)
  
  nmax = res_array(a)*nmax_min
  Nx = res_array(a)*(Nx_min-1) + pml_add(b)*length_add/dx + 1
- Ny = res_array(a)*(Ny_min-1) + pml_add(b)*length_add/dy + 1
- Kmax = res_array(a)*(Kmax_min-1) + pml_add(b)*length_add/dz + 1
+ Ny = res_array(a)*(Ny_min-1) + pml_add(b)*length_add/dy + 1 !Beware Truncated Length
+ N_loc = res_array(a)*(N_loc_min) + ceiling(real(pml_add(b)*length_add)/real(dy)/real(nprocs))
 
  i_start = (Nx-1)/2 - 2*res_array(a)
- j_start = (Ny-1)/2 - 4*res_array(a)
- k_start = (Kmax-1)/2 - 1*res_array(a)
+ j_start = (N_loc)/2 - 4*res_array(a)
  i_end   = (Nx-1)/2 + 2*res_array(a)   
- j_end   = (Ny-1)/2 + 4*res_array(a)
- k_end   = (Kmax-1)/2 + 1*res_array(a)
+ j_end   = (N_loc)/2 + 4*res_array(a)
 
  dt = 1.906574869531006E-12/res_array(a)
  
  istart = (Nx-1)/2 - 1*res_array(a)
  iend   = (Nx-1)/2 + 1*res_array(a)
- jstart = (Ny-1)/2 - 10*res_array(a)
- jend   = (Ny-1)/2 + 10*res_array(a)
- kstart = (Kmax-1)/2
- kend   = (Kmax-1)/2
+ jstart = (N_loc)/2 - 10*res_array(a)
+ jend   = (N_loc)/2 + 10*res_array(a)
  
  isource = istart
  jsource = jstart
- ksource = kstart
  
  npml = res_array(a)*(npml_min-1) + pml_add(b)*length_add/dx + 1
  
@@ -283,13 +259,10 @@ function fdtd3D_CPML() result(P_sum_fdtd)
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    P1 = 0.0
    P2 = 0.0
-
-   h_z(:,:,:) = 0.0
+   
    Hz(:,:,:) = 0.0
    Ex(:,:,:) = 0.0
-   h_z(:,:,:) = 0.0
    Ey(:,:,:) = 0.0
-   h_z(:,:,:) = 0.0
    sig(:,:,:) = sigM1
    eps(:,:,:) = epsR*epsO
 
@@ -301,18 +274,6 @@ function fdtd3D_CPML() result(P_sum_fdtd)
    psi_Eyx_2(:,:,:) = 0.0
    psi_Eyz_1(:,:,:) = 0.0
    psi_Eyz_2(:,:,:) = 0.0
-   psi_h_zy_1(:,:,:) = 0.0
-   psi_h_zy_2(:,:,:) = 0.0
-   psi_h_zx_1(:,:,:) = 0.0
-   psi_h_zx_2(:,:,:) = 0.0
-   psi_h_zy_1(:,:,:) = 0.0
-   psi_h_zy_2(:,:,:) = 0.0
-   psi_h_zz_1(:,:,:) = 0.0
-   psi_h_zz_2(:,:,:) = 0.0
-   psi_h_zx_1(:,:,:) = 0.0
-   psi_h_zx_2(:,:,:) = 0.0
-   psi_h_zz_1(:,:,:) = 0.0
-   psi_h_zz_2(:,:,:) = 0.0
    psi_Hzy_1(:,:,:) = 0.0
    psi_Hzy_2(:,:,:) = 0.0
    psi_Hzx_1(:,:,:) = 0.0
@@ -322,11 +283,14 @@ function fdtd3D_CPML() result(P_sum_fdtd)
 
    write(*,*)"res: ", res_array(a)
    write(*,*)"pml_add: ", pml_add(b)
-  !bugcheck
-   if(istart < 1.or. iend > Nx-1.or. jstart < 1.or. jend > Ny-1.or. kstart < 1.or. kend > Kmax-1)then
-    write(*,*)"error -- q(end/start) reference not within range [1,Qmax-1]"
+  !defect check
+   if(istart < 1.or. iend > Nx-1)then
+    write(*,*)"Error -- i(end/start) reference not within range [1,Nx-1]"
    endif
-
+   if(jstart < 1.or. jend > N_loc)then
+    write(*,*)"Error -- j(end/start) reference not within range [1,N_loc]"
+   endif
+   
 !
 !~~~ fundamental constants [all numbers are in SI units]~~~!
 !
@@ -395,7 +359,7 @@ double precision psi_Hzy_1(Nx-1,npml-1),psi_Exy_1(Nx-1,npml)
 double precision psi_Hzy_2(Nx-1,npml-1),psi_Exy_2(Nx-1,npml)
 double precision be_y(npml),ce_y(npml),alphae_y(npml),sige_y(npml),kappae_y(npml)
 double precision bh_y(npml-1),ch_y(npml-1),alphah_y(npml-1),sigh_y(npml-1),kappah_y(npml-1)
-double precision den_ex(Nx),den_h_z(Nx),den_ey(N_loc),den_h_z(N_loc)
+double precision den_ex(Nx),den_hx(Nx),den_ey(N_loc),den_hy(N_loc)
 
 double precision psi_Hzx_1(npml-1,N_loc),psi_Eyx_1(npml,N_loc)
 double precision psi_Hzx_2(npml-1,N_loc),psi_Eyx_2(npml,N_loc)
