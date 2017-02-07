@@ -21,14 +21,15 @@ double precision, parameter :: mu0=4.0D-7*pi,eps0=1.0D0/(c*c*mu0)
 double precision, parameter :: h=1.054571628D-34
 double complex, parameter :: Im=(0.0,1.0)
 double precision, parameter :: ev_to_radsec=2.0*pi*2.4180e14
-double precision, parameter :: eps_delectric=1.0
 
+double precision, parameter :: eps_delectric=1.0
+double precision :: dt_eps0, dt_mu0
 !
 !~~~ Source ~~~!
 !
 
-double precision, parameter :: tau=0.36d-15,E0=1.0,omega=ev_to_radsec*3.0
-double precision, parameter :: omega_min=ev_to_radsec*1.5,omega_max=ev_to_radsec*4.0
+double precision, parameter :: H0 = 1.0, wavelength = length_add
+double precision, parameter :: omega = 2*pi*c/wavelength
 
 ! Drude Specification
 
@@ -46,6 +47,18 @@ integer, parameter :: m = 3, ma = 1
 !
 integer i,ii,j,jj,n,nn,k
 double precision t
+
+!
+!~~~ MPI part ~~~!
+!
+integer ierr,nprocs,myrank,j_glob,mfdtd,n1
+integer :: istatus(MPI_STATUS_SIZE)
+integer itag,ireq,itag1,itag2,itag3,itag4,itag5,itag6
+
+!-------------------------!
+ call MPI_INIT(ierr)
+ call MPI_COMM_SIZE(MPI_COMM_WORLD,nprocs,ierr)
+ call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ierr)
 
 
 !-------------------------------------------------------------------
@@ -96,11 +109,15 @@ double precision t
 !------------------------ Field and CPML Arrays --------------------
 !-------------------------------------------------------------------
 
-double precision :: Hz(Nx_max-1, N_loc_max)
+double precision :: Hz(Nx_max-1, N_loc_max), Hz_get(Nx_max-1), Hz_send(Nx_max-1)
 
-double precision :: Ex(Nx_max-1, N_loc_max)
+double precision :: Ex(Nx_max-1, N_loc_max), Ex_get(Nx_max-1), Ex_send(Nx_max-1)
 
 double precision :: Ey(Nx_max, N_loc_max)
+
+!Source
+
+double precision :: pulse(Nt_max)
 
 !PML
 
@@ -122,7 +139,7 @@ double precision :: psi_Exy_2(Nx_max-1,npml_max)
 
 double precision, dimension(npml_max-1) :: bh_x, ch_x, alphah_x, sigh_x, kappah_x
 
-double precision :: be_x(npml_max), ce_x(npml_max), alphae_x(npml_max), sige_x(npml_max), kappae_x(npml_max)
+double precision, dimension(npml_max) :: be_x, ce_x, alphae_x, sige_x, kappae_x
 
 double precision :: bh_y(npml_max-1), ch_y(npml_max-1), alphah_y(npml_max-1), sigh_y(npml_max-1), kappah_y(npml_max-1)
 
@@ -202,6 +219,11 @@ function Vacuum_CPML() result(P_sum_fdtd)
  
  dt = dx/(2.0*c)
  
+ dt_eps0 = dt/eps0
+ dt_mu0 = dt/mu0
+
+ npml = res_array(a)*(npml_min-1) + pml_add(b)*length_add/dx + 1
+ 
  Nt = res_array(a)*Nt_min
  Nx = res_array(a)*(Nx_min-1) + 2*pml_add(b)*length_add/dx + 1
  Ny = res_array(a)*(Ny_min-1) + 2*pml_add(b)*length_add/dy + 1
@@ -219,8 +241,6 @@ endif
  i_end   = i_start   
  j_end   = j_start
  
- npml = res_array(a)*(npml_min-1) + pml_add(b)*length_add/dx + 1
- 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !  INITIALIZE VARIABLES
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -230,8 +250,6 @@ endif
    Hz(:,:,:) = 0.0
    Ex(:,:,:) = 0.0
    Ey(:,:,:) = 0.0
-   sig(:,:,:) = sigM1
-   eps(:,:,:) = epsR*epsO
 
    psi_Exy_1(:,:,:) = 0.0
    psi_Exy_2(:,:,:) = 0.0
@@ -257,124 +275,24 @@ endif
    if(jstart < 1.or. jend > N_loc)then
     write(*,*)"Error -- j(end/start) reference not within range [1,N_loc]"
    endif
-   
-!
-!~~~ number of grid points & time steps ~~~!
-!
-integer, parameter :: Nt=200000,N_w=400
-double precision, parameter :: omega_min=ev_to_radsec*1.5,omega_max=ev_to_radsec*4.0
-
-integer, parameter :: Ny=1281,N_loc=40
-double precision, parameter :: y0=-640.0D-9,yM=640.0D-9
-
-integer, parameter :: Nx=301
-double precision, parameter :: x0=-150.0e-9,xM=150.0e-9
 
 !
-!~~~ Source ~~~!
+!~~~ physical grid ~~~!
 !
 
-double precision, parameter :: tau=0.36d-15,E0=1.0,omega=ev_to_radsec*3.0
-double precision aBH(4)
-double precision pulse(Nt)
-double precision tmp1,tmp2,omega_P(N_w),SN(N_w,2)
-!
-!~~~ detection ~~~!
-!
-double precision tmp
-
-integer, parameter :: iw1=i0,iw2=i1
-integer, parameter :: mwR=30,jwR=31  !<--- + 590nm
-integer, parameter :: mwT=1,jwT=21   !<--- - 580nm
-
-double precision Ex_temp(iw1:iw2,N_w,2),Hz_temp(iw1:iw2,N_w,2)
-double precision Ex_temp_inc(iw1:iw2,N_w,2),Hz_temp_inc(iw1:iw2,N_w,2)
-double precision Ex_w,Hz_w,av_x1,av_x2,av_y
-double complex sum_int,cTMP1,cTMP2
-double precision P_sct(N_w),P_inc(N_w)
-!
-!~~~ ph_zsical grid ~~~!
-!
-double precision, parameter :: dx=(xM-x0)/(Nx-1),dy=(yM-y0)/(Ny-1)
 double precision x(Nx),xM2(Nx-1),y(N_loc),yM2(N_loc)
-!
-!~~~ dielectric constant of the host media (=1 for vacuum) ~~~!
-!
-double precision, parameter :: eps_delectric=1.0
-!
-!~~~ time step ~~~!
-!
-double precision, parameter :: dt=dy/(2.0*c)
-!
-!~~~ CPML ~~~!
-!
-integer, parameter :: npml=19,m=3,ma=1 
-double precision sigmaCPML,alphaCPML,kappaCPML
-double precision psi_Hzy_1(Nx-1,npml-1),psi_Exy_1(Nx-1,npml)                              
-double precision psi_Hzy_2(Nx-1,npml-1),psi_Exy_2(Nx-1,npml)
-double precision be_y(npml),ce_y(npml),alphae_y(npml),sige_y(npml),kappae_y(npml)
-double precision bh_y(npml-1),ch_y(npml-1),alphah_y(npml-1),sigh_y(npml-1),kappah_y(npml-1)
-double precision den_ex(Nx),den_hx(Nx),den_ey(N_loc),den_hy(N_loc)
-
-double precision psi_Hzx_1(npml-1,N_loc),psi_Eyx_1(npml,N_loc)
-double precision psi_Hzx_2(npml-1,N_loc),psi_Eyx_2(npml,N_loc)
-double precision be_x(npml),ce_x(npml),alphae_x(npml),sige_x(npml),kappae_x(npml)
-double precision bh_x(npml-1),ch_x(npml-1),alphah_x(npml-1),sigh_x(npml-1),kappah_x(npml-1)
-
-double precision psi_Hzy_1_inc(npml-1),psi_Exy_1_inc(npml)                              
-double precision psi_Hzy_2_inc(npml-1),psi_Exy_2_inc(npml)
-!
-!~~~ Drude model for Ag ~~~!
-!
-
-double precision tmpE
-
-double precision PDx(Nx-1,N_loc),PDy(Nx,N_loc)
-
-logical FBx(Nx-1,N_loc),FBy(Nx,N_loc)
 
 !
-!~~~ EM field components ~~~!
+!~~~ Specify Source ~~~!
 !
-double precision Ex(Nx-1,N_loc),Ey(Nx,N_loc),Hz(Nx-1,N_loc)
-double precision Ex_inc(N_loc),Hz_inc(N_loc)
-!
-!~~~ other parameters and variables ~~~!
-!
-integer i,ii,j,jj,n,nn,k
-double precision t
-double precision, parameter :: dt_eps0=dt/eps0,dt_mu0=dt/mu0
-!
-!~~~ MPI part ~~~!
-!
-integer ierr,nprocs,myrank,j_glob,mfdtd,n1
-integer :: istatus(MPI_STATUS_SIZE)
-integer itag,ireq,itag1,itag2,itag3,itag4,itag5,itag6
-double precision Ex_get(Nx-1),Ex_send(Nx-1)
-double precision Hz_get(Nx-1),Hz_send(Nx-1)
-double precision Ex_send_inc,Ex_get_inc
-double precision Hz_send_inc,Hz_get_inc
-
-!-------------------------!
- call MPI_INIT(ierr)
- call MPI_COMM_SIZE(MPI_COMM_WORLD,nprocs,ierr)
- call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ierr)
-
-aBH(1)=0.353222222
-aBH(2)=-0.488
-aBH(3)=0.145
-aBH(4)=-0.010222222
 
 pulse=0.0
 do n=1,Nt
  t=dt*dble(n)
- if(t<=tau)then
-   pulse(n)=E0*cos(omega*t)*( &
-                 aBH(1)+ &
-				 aBH(2)*cos(2.0*pi*t/tau)+ &
-				 aBH(3)*cos(2.0*pi*2.0*t/tau)+ &
-				 aBH(4)*cos(2.0*pi*3.0*t/tau))
-  else
+ 
+ pulse = H0*sin(omega*t)
+ 
+ else
    pulse(n)=0.0
  endif
 
