@@ -55,12 +55,6 @@ integer ierr,nprocs,myrank,j_glob,mfdtd,n1
 integer :: istatus(MPI_STATUS_SIZE)
 integer itag,ireq,itag1,itag2,itag3,itag4,itag5,itag6
 
-!-------------------------!
- call MPI_INIT(ierr)
- call MPI_COMM_SIZE(MPI_COMM_WORLD,nprocs,ierr)
- call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ierr)
-
-
 !-------------------------------------------------------------------
 !----------------- Minimum Resolution Variables --------------------
 !-------------------------------------------------------------------
@@ -100,7 +94,8 @@ integer itag,ireq,itag1,itag2,itag3,itag4,itag5,itag6
       Nt_max = res_array(Nr)*Nt_min,                  &                
       Nx_max = res_array(Nr)*(Nx_min-1) + length_add/dx_min + 1,                  &
       Ny_max = res_array(Nr)*(Ny_min-1) + length_add/dx_min + 1,                  &
-      N_loc_max = res_array(Nr)*N_loc_min !Different for myrank = 0 and nprocs-1
+      N_loc_max = res_array(Nr)*N_loc_min + length_add/dx_min!Different for myrank = 0 and nprocs-1
+
       
    INTEGER, parameter :: &
       npml_max = 9*res_array(Nr) + length_add/dx_min + 1
@@ -114,6 +109,10 @@ double precision :: Hz(Nx_max-1, N_loc_max), Hz_get(Nx_max-1), Hz_send(Nx_max-1)
 double precision :: Ex(Nx_max-1, N_loc_max), Ex_get(Nx_max-1), Ex_send(Nx_max-1)
 
 double precision :: Ey(Nx_max, N_loc_max)
+
+!Physical Grid
+
+double precision :: x(Nx_max), xM2(Nx_max-1), y(N_loc_max), yM2(N_loc_max)
 
 !Source
 
@@ -150,6 +149,11 @@ double precision :: be_y(npml_max), ce_y(npml_max), alphae_y(npml_max), sige_y(n
 double precision :: den_ex(Nx_max-1), den_hx(Nx_max-1)
 
 double precision :: den_ey(N_loc_max), den_hy(N_loc_max)
+
+!-------------------------!
+ call MPI_INIT(ierr)
+ call MPI_COMM_SIZE(MPI_COMM_WORLD,nprocs,ierr)
+ call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ierr)
       
 !-----------------------------------------------------------------------
 !--------------------------  Convergence Loop --------------------------
@@ -183,32 +187,27 @@ enddo! Nr resolutions
 function Vacuum_CPML() result(P_sum_fdtd)
 
    double precision :: P_sum_fdtd
-   double precision :: Px, Py, Pz, P_sum
+   double precision :: P_sum
 
 !-------------------------------------------------------------------
 !----------------------- Variable Declaration ----------------------
 !-------------------------------------------------------------------
 
-   double precision ::                                        &
-      dx, dy
+   double precision :: dx, dy
    
-   double precision ::             &
-      dt
+   double precision :: dt
 
-   integer ::                                     &
-      Nt, Nx, Ny, N_loc
+   integer :: Nt, Nx, Ny, N_loc
       
 !  ..................................
 !  Convergence Detection Zone
-   integer :: i_start, i_end, &
-              j_start, j_end, &
-     
-   integer ::                                    &
+   integer :: i_start, i_end, & 
+              j_start, j_end, 
+   integer ::                                    
       isource, jsource
 
    integer ::
       npml
-
 
 !-------------------------------------------------------------------
 !----------------------- Variable Assignment -----------------------
@@ -230,57 +229,16 @@ function Vacuum_CPML() result(P_sum_fdtd)
  N_loc = res_array(a)*(N_loc_min)
 
 if(myrank == 0 .or. myrank == nprocs-1)then !PML Processors take on all of the extra load since npml_add < nprocs
- N_loc = res_array(a)*N_loc_min + pml_add*length_add/dx
+ N_loc = res_array(a)*N_loc_min + pml_add(b)*length_add/dx
 endif
 
- isource = (Nx-1)/2
- jsource = (Ny-1)/2
+ isource = (Nx-1)/2 + 1
+ jsource = (Ny-1)/2 + 1
 
  i_start = isource
  j_start = jsource
  i_end   = i_start   
  j_end   = j_start
- 
-!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!  INITIALIZE VARIABLES
-!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   P1 = 0.0
-   P2 = 0.0
-   
-   Hz(:,:,:) = 0.0
-   Ex(:,:,:) = 0.0
-   Ey(:,:,:) = 0.0
-
-   psi_Exy_1(:,:,:) = 0.0
-   psi_Exy_2(:,:,:) = 0.0
-   psi_Exz_1(:,:,:) = 0.0
-   psi_Exz_2(:,:,:) = 0.0
-   psi_Eyx_1(:,:,:) = 0.0
-   psi_Eyx_2(:,:,:) = 0.0
-   psi_Eyz_1(:,:,:) = 0.0
-   psi_Eyz_2(:,:,:) = 0.0
-   psi_Hzy_1(:,:,:) = 0.0
-   psi_Hzy_2(:,:,:) = 0.0
-   psi_Hzx_1(:,:,:) = 0.0
-   psi_Hzx_2(:,:,:) = 0.0
-   
-   P_sum_fdtd = 0.0
-
-   write(*,*)"res: ", res_array(a)
-   write(*,*)"pml_add: ", pml_add(b)
-  !defect check
-   if(istart < 1.or. iend > Nx-1)then
-    write(*,*)"Error -- i(end/start) reference not within range [1,Nx-1]"
-   endif
-   if(jstart < 1.or. jend > N_loc)then
-    write(*,*)"Error -- j(end/start) reference not within range [1,N_loc]"
-   endif
-
-!
-!~~~ physical grid ~~~!
-!
-
-double precision x(Nx),xM2(Nx-1),y(N_loc),yM2(N_loc)
 
 !
 !~~~ Specify Source ~~~!
@@ -295,22 +253,37 @@ do n=1,Nt
  else
    pulse(n)=0.0
  endif
+enddo
+ 
+!
+!~~~ physical grid ~~~!
+!
 
-
-!~~~ grid ~~~!
 do i=1,Nx
  x(i)=x0+dx*(i-1)
 enddo
+
 do i=1,(Nx-1)
  xM2(i)=x0+dx*(i-1)+dx/2.0
 enddo
+
 do j=1,N_loc
- j_glob=myrank*N_loc+j
+
+ if(myrank == 0)then
+  j_glob = j
+ endif
+
+ if(myrank > 0 .and. myrank < nprocs-1)then
+  j_glob=myrank*N_loc + pml_add(b)*length_add/dx + j
+ endif
+
+ if(myrank == nprocs-1)then
+  j_glob = myrank*(N_loc - pml_add(b)*length_add/dx) + pml_add(b)*length_add/dx) + j
+ endif
+
  y(j)=y0+dy*(j_glob-1)
-enddo
-do j=1,N_loc
- j_glob=myrank*N_loc+j
  yM2(j)=y0+dy*(j_glob-1)+dy/2.0
+
 enddo
 
 FBx=.false.
@@ -467,8 +440,8 @@ Ex=0.0
 Ey=0.0
 Hz=0.0
 
-PDx=0.0
-PDy=0.0
+!PDx=0.0
+!PDy=0.0
 
 psi_Hzy_1=0.0
 psi_Exy_1=0.0
@@ -484,28 +457,19 @@ Ex_send=0.0
 Hz_get=0.0
 Hz_send=0.0
 
-Ex_inc=0.0
-Hz_inc=0.0
-
-Ex_get_inc=0.0
-Ex_send_inc=0.0
-Hz_get_inc=0.0
-Hz_send_inc=0.0
-
-psi_Hzy_1_inc=0.0
-psi_Exy_1_inc=0.0
-psi_Hzy_2_inc=0.0
-psi_Exy_2_inc=0.0
-
-Ex_temp=0.0
-Hz_temp=0.0
-
-Ex_temp_inc=0.0
-Hz_temp_inc=0.0
-
-if(myrank==mwT)then
- call cpu_time(cpu1)
-endif
+  if(myrank == 0)then
+   write(*,*)"res: ", res_array(a)
+   write(*,*)"pml_add: ", pml_add(b)
+  !defect check
+   if(i_start < 1.or. i_end > Nx-1)then
+    write(*,*)"Error -- i(end/start) reference not within range [1,Nx-1]"
+   endif
+   if(j_start < 1.or. j_end > N_loc)then
+    write(*,*)"Error -- j(end/start) reference not within range [1,N_loc]"
+   endif
+   
+   write(*,*)"begin time-stepping"
+  endif
 
 do n=1,Nt
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
