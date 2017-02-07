@@ -63,8 +63,8 @@ double precision t
 
    INTEGER, parameter :: &
       Nt_min = 100000,                     & 
-      Nx_min = 400 + 1,                  & 
-      Ny_min = 400 + 1,                  &
+      Nx_min = 200 + 1,                  & 
+      Ny_min = 640 + 1,                  &
       N_loc_min = 20
       
    INTEGER, parameter :: &
@@ -84,13 +84,13 @@ double precision t
       dt_min = (dt_max)/res_array(Nr)
 
    INTEGER, parameter :: &
-      nmax_max = res_array(Nr)*nmax_min,                  &                
+      Nt_max = res_array(Nr)*Nt_min,                  &                
       Nx_max = res_array(Nr)*(Nx_min-1) + length_add/dx_min + 1,                  &
-      Ny_max = res_array(Nr)*(Ny_min-1) + length_add/dy_min + 1,                  &
-      N_loc_max = ceiling(real((Ny_max - 1))/real(nprocs))
+      Ny_max = res_array(Nr)*(Ny_min-1) + length_add/dx_min + 1,                  &
+      N_loc_max = res_array(Nr)*N_loc_min !Different for myrank = 0 and nprocs-1
       
    INTEGER, parameter :: &
-      npml_max = 10*res_array(Nr) + length_add/dx_min + 1
+      npml_max = 9*res_array(Nr) + length_add/dx_min + 1
 
 !-------------------------------------------------------------------
 !------------------------ Field and CPML Arrays --------------------
@@ -172,15 +172,13 @@ function Vacuum_CPML() result(P_sum_fdtd)
 !----------------------- Variable Declaration ----------------------
 !-------------------------------------------------------------------
 
-
-!  ..................................
-!  Specify Grid Cell Size in Each Direction and Calculate the 
-!  Resulting Courant-Stable Time Step
    double precision ::                                        &
       dx, dy
-!  ..................................
-!  Specify Number of Time Steps and Grid Size Parameters
-   INTEGER ::                                     &
+   
+   double precision ::             &
+      dt
+
+   integer ::                                     &
       Nt, Nx, Ny, N_loc
       
 !  ..................................
@@ -188,19 +186,10 @@ function Vacuum_CPML() result(P_sum_fdtd)
    integer :: i_start, i_end, &
               j_start, j_end, &
      
-      
-   double precision ::             &
-       dt
-
-!  ..................................
-!  Specify the PEC Plate Boundaries and the Source/Recording Points
-   INTEGER ::                                    &
-      istart, iend, jstart, jend,                       &
+   integer ::                                    &
       isource, jsource
-!  ..................................
-!  Specify the CPML Thickness in Each Direction (Value of Zero 
-!  Corresponds to No PML, and the Grid is Terminated with a PEC)
-   INTEGER ::
+
+   integer ::
       npml
 
 
@@ -211,25 +200,24 @@ function Vacuum_CPML() result(P_sum_fdtd)
  dx = dx_max/res_array(a)
  dy = dy_max/res_array(a)
  
+ dt = dx/(2.0*c)
+ 
  Nt = res_array(a)*Nt_min
- Nx = res_array(a)*(Nx_min-1) + pml_add(b)*length_add/dx + 1
- Ny = res_array(a)*(Ny_min-1) + pml_add(b)*length_add/dy + 1
- N_loc = res_array(a)*(N_loc_min) + ceiling(real(pml_add(b)*length_add)/real(dy)/real(nprocs))
+ Nx = res_array(a)*(Nx_min-1) + 2*pml_add(b)*length_add/dx + 1
+ Ny = res_array(a)*(Ny_min-1) + 2*pml_add(b)*length_add/dy + 1
+ N_loc = res_array(a)*(N_loc_min)
 
- i_start = (Nx-1)/2 - 2*res_array(a)
- j_start = (N_loc)/2 - 4*res_array(a)
- i_end   = (Nx-1)/2 + 2*res_array(a)   
- j_end   = (N_loc)/2 + 4*res_array(a)
+if(myrank == 0 .or. myrank == nprocs-1)then !PML Processors take on all of the extra load since npml_add < nprocs
+ N_loc = res_array(a)*N_loc_min + pml_add*length_add/dx
+endif
 
- dt = 1.906574869531006E-12/res_array(a)
- 
- istart = (Nx-1)/2 - 1*res_array(a)
- iend   = (Nx-1)/2 + 1*res_array(a)
- jstart = (N_loc)/2 - 10*res_array(a)
- jend   = (N_loc)/2 + 10*res_array(a)
- 
- isource = istart
- jsource = jstart
+ isource = (Nx-1)/2
+ jsource = (Ny-1)/2
+
+ i_start = isource
+ j_start = jsource
+ i_end   = i_start   
+ j_end   = j_start
  
  npml = res_array(a)*(npml_min-1) + pml_add(b)*length_add/dx + 1
  
