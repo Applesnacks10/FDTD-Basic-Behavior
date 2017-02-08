@@ -23,7 +23,6 @@ double complex, parameter :: Im=(0.0,1.0)
 double precision, parameter :: ev_to_radsec=2.0*pi*2.4180e14
 
 double precision, parameter :: eps_delectric=1.0
-double precision :: dt_eps0, dt_mu0
 !
 !~~~ Source ~~~!
 !
@@ -43,6 +42,7 @@ double precision, parameter :: x_detect = x_source, y_detect = y_source
 
 !CPML Scaling
 integer, parameter :: m = 3, ma = 1
+double precision, parameter :: alphaCPML = 0.05, kappaCPML = 5.0
 
 !
 !~~~ Indices ~~~!
@@ -166,7 +166,7 @@ double precision :: den_ey(N_loc_max), den_hy(N_loc_max)
 do a = 1,Nr
  do b = 1,2
  
-  Convergence(a,b) = fdtd3D_CPML()
+  Convergence(a,b) = Vacuum_CPML()
   
  enddo! 2 cpml lengths
  
@@ -186,30 +186,30 @@ enddo! Nr resolutions
 
  contains
  
-function Vacuum_CPML() result(P_sum_fdtd)
+function Vacuum_CPML() result(P_sum)
 
-   double precision :: P_sum_fdtd
    double precision :: P_sum
 
 !-------------------------------------------------------------------
 !----------------------- Variable Declaration ----------------------
 !-------------------------------------------------------------------
 
-   double precision :: dx, dy
+   double precision :: dx, dy, x0, y0, xM, yM
    
    double precision :: dt
 
    integer :: Nt, Nx, Ny, N_loc
-      
+   
+   integer :: npml
+   
 !!  ..................................
 !!  Convergence Detection Zone
 !   integer :: i_start, i_end, & 
 !              j_start, j_end, 
 !   integer ::                                    
 !      isource, jsource
-
-   integer ::
-      npml
+   double precision :: sigmaCPML
+   double precision :: dt_eps0, dt_mu0
 
 !-------------------------------------------------------------------
 !----------------------- Variable Assignment -----------------------
@@ -217,6 +217,12 @@ function Vacuum_CPML() result(P_sum_fdtd)
 
  dx = dx_max/res_array(a)
  dy = dy_max/res_array(a)
+ 
+ x0 = x0_min - pml_add(b)*length_add/dx
+ xM = xM_min + pml_add(b)*length_add/dx
+ 
+ y0 = y0_min - pml_add(b)*length_add/dx
+ yM = yM_min + pml_add(b)*length_add/dx
  
  dt = dx/(2.0*c)
  
@@ -233,6 +239,8 @@ function Vacuum_CPML() result(P_sum_fdtd)
 if(myrank == 0 .or. myrank == nprocs-1)then !PML Processors take on all of the extra load since npml_add < nprocs
  N_loc = res_array(a)*N_loc_min + pml_add(b)*length_add/dx
 endif
+ 
+ sigmaCPML=0.8*(m+1)/(dx*(mu0/eps0*eps_delectric)**0.5)
 
 ! isource = (Nx-1)/2 + 1
 ! jsource = (Ny-1)/2 + 1
@@ -251,10 +259,7 @@ do n=1,Nt
  t=dt*dble(n)
  
  pulse = H0*sin(omega*t)
- 
- else
-   pulse(n)=0.0
- endif
+
 enddo
  
 !
@@ -280,7 +285,7 @@ do j=1,N_loc
  endif
 
  if(myrank == nprocs-1)then
-  j_glob = myrank*(N_loc - pml_add(b)*length_add/dx) + pml_add(b)*length_add/dx) + j
+  j_glob = myrank*(N_loc - pml_add(b)*length_add/dx) + pml_add(b)*length_add/dx + j
  endif
 
  y(j)=y0+dy*(j_glob-1)
@@ -288,8 +293,8 @@ do j=1,N_loc
 
 enddo
 
-FBx=.false.
-FBy=.false.
+!!FBx=.false.
+!!FBy=.false.
 
 !~~~ structure ~~~!
 !do i=1,Nx-1
@@ -298,9 +303,9 @@ FBy=.false.
 !    ((y(j)>z1).and.(y(j)<z2).and.(xM2(i)<(-R)).and.(xM2(i)>(-slit_length/2.0))).or. &
 !    ((y(j)>z1).and.(y(j)<z2).and.(xM2(i)>R).and.(xM2(i)<(slit_length/2.0))) &
 !     )then
-!    FBx(i,j)=.true.
+!    !!FBx(i,j)=.true.
 !   else
-!    FBx(i,j)=.false.
+!    !!FBx(i,j)=.false.
 !  endif
 ! enddo
 !enddo
@@ -311,22 +316,20 @@ FBy=.false.
 !    ((yM2(j)>z1).and.(yM2(j)<z2).and.(x(i)<(-R)).and.(x(i)>(-slit_length/2.0))).or. &
 !    ((yM2(j)>z1).and.(yM2(j)<z2).and.(x(i)>R).and.(x(i)<(slit_length/2.0))) &
 !     )then
-!    FBy(i,j)=.true.
+!    !!FBy(i,j)=.true.
 !   else
-!    FBy(i,j)=.false.
+!    !!FBy(i,j)=.false.
 !  endif
 ! enddo
 !enddo
 
-FBy = .false.
-FBx = .false.
+!!FBy = .false.
+!!FBx = .false.
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!
          !~~~ CPML vectors ~~~!
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!
-sigmaCPML=0.8*(m+1)/(dx*(mu0/eps0*eps_delectric)**0.5)
-alphaCPML=0.05
-kappaCPML=5.0
+
 !~~~ set CPML vectors ~~~!
 do i=1,npml
  sige_x(i)=sigmaCPML*((npml-i)/(npml-1.0))**m
@@ -462,14 +465,6 @@ Hz_send=0.0
   if(myrank == 0)then
    write(*,*)"res: ", res_array(a)
    write(*,*)"pml_add: ", pml_add(b)
-  !defect check
-   if(i_start < 1.or. i_end > Nx-1)then
-    write(*,*)"Error -- i(end/start) reference not within range [1,Nx-1]"
-   endif
-   if(j_start < 1.or. j_end > N_loc)then
-    write(*,*)"Error -- j(end/start) reference not within range [1,N_loc]"
-   endif
-   
    write(*,*)"begin time-stepping"
   endif
 
@@ -542,16 +537,21 @@ if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
  enddo
  
 !
-!~~~ Source ~~~!
+!~~~ Source and Detection~~~!
 !
 
  do j = 1,N_loc
   do i = 1,Nx
-   if(x(i) == xsource .and. y(j) == ysource)then
+   if(x(i) == x_source .and. y(j) == y_source)then
     Hz(i,j) = Hz(i,j) + pulse(n)
+   endif
+   if(x(i) == x_detect .and. y(j) == y_detect)then
+    P_sum = P_sum + (Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0
    endif
   enddo
  enddo
+ 
+
  
  do j=1,N_loc
 !  PML for left Hz, x-direction
@@ -643,7 +643,7 @@ endif ! myrank == 0
 if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
  do i=1,Nx-1
   j=1
-!   if(FBx(i,j))then
+!   if(!FBx(i,j))then
 !     tmpE=C1*Ex(i,j)+C3*(Hz(i,j)-Hz_get(i))*den_ey(j)-C4*PDx(i,j)
 !     PDx(i,j)=A1*PDx(i,j)+A2*(tmpE+Ex(i,j))
 !     Ex(i,j)=tmpE
@@ -652,7 +652,7 @@ if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
 !   endif
   
   do j=2,N_loc
-!   if(FBx(i,j))then
+!   if(!FBx(i,j))then
 !     tmpE=C1*Ex(i,j)+C3*(Hz(i,j)-Hz(i,j-1))*den_ey(j)-C4*PDx(i,j)
 !     PDx(i,j)=A1*PDx(i,j)+A2*(tmpE+Ex(i,j))
 !     Ex(i,j)=tmpE
@@ -696,7 +696,7 @@ endif ! myrank == nprocs-1
 if((myrank>=0).and.(myrank<(nprocs-1)))then
 ! do i=2,Nx-1
 !  do j=1,N_loc
-!   if(FBy(i,j))then
+!   if(!FBy(i,j))then
 !     tmpE=C1*Ey(i,j)+C3*(Hz(i-1,j)-Hz(i,j))*den_ex(i)-C4*PDy(i,j)
 !     PDy(i,j)=A1*PDy(i,j)+A2*(tmpE+Ey(i,j))
 !     Ey(i,j)=tmpE
@@ -753,6 +753,6 @@ enddo !Nt
 !.:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:.
     WRITE(*,*)"done time-stepping"
     
-end function Convergence_Vacuum
+end function Vacuum_CPML
 
 end !Main
