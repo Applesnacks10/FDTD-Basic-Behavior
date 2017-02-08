@@ -484,37 +484,34 @@ do n=1,Nt
     do i=1,(Nx-1)
      Ex_send(i)=Ex(i,1)
     enddo    
-    Ex_send_inc=Ex_inc(1)
     call MPI_SEND(Ex_send,(Nx-1),MPI_doUBLE_PRECISION,(j-1),itag,MPI_COMM_WORLD,ierr)
-    call MPI_SEND(Ex_send_inc,1,MPI_doUBLE_PRECISION,(j-1),itag1,MPI_COMM_WORLD,ierr)
    elseif(myrank==(j-1))then
     call MPI_RECV(Ex_get,(Nx-1),MPI_doUBLE_PRECISION,j,itag,MPI_COMM_WORLD,istatus,ierr)
-    call MPI_RECV(Ex_get_inc,1,MPI_doUBLE_PRECISION,j,itag1,MPI_COMM_WORLD,istatus,ierr)
   endif!send_recv
  enddo!nprocs
 
 if(myrank==0)then !rank=0, here PML in y-direction is only applied to the bottom part
  do i=1,Nx-1
   do j=1,N_loc-1
-   Hz(i,j)=Hz(i,j)+dt_mu0*((Ey(i,j)-Ey(i+1,j))*den_h_z(i)+ &
-			               (Ex(i,j+1)-Ex(i,j))*den_h_z(j))
+   Hz(i,j)=Hz(i,j)+dt_mu0*((Ey(i,j)-Ey(i+1,j))*den_hx(i)+ &
+			               (Ex(i,j+1)-Ex(i,j))*den_hy(j))
   enddo
     
   j=N_loc
-   Hz(i,j)=Hz(i,j)+dt_mu0*((Ey(i,j)-Ey(i+1,j))*den_h_z(i)+ &
-			               (Ex_get(i)-Ex(i,j))*den_h_z(j))
+   Hz(i,j)=Hz(i,j)+dt_mu0*((Ey(i,j)-Ey(i+1,j))*den_hx(i)+ &
+			               (Ex_get(i)-Ex(i,j))*den_hy(j))
  enddo
 
  do j=1,N_loc
 !  PML for left Hz, x-direction
   do i=1,npml-1
-   psi_Hzx_1(i,j)=bh_y(i)*psi_Hzx_1(i,j)+ch_y(i)*(Ey(i,j)-Ey(i+1,j))/dx
+   psi_Hzx_1(i,j)=bh_x(i)*psi_Hzx_1(i,j)+ch_x(i)*(Ey(i,j)-Ey(i+1,j))/dx
    Hz(i,j)=Hz(i,j)+dt_mu0*psi_Hzx_1(i,j)
   enddo
 !  PML for right Hz, x-direction
   ii=npml-1
   do i=Nx+1-npml,Nx-1
-   psi_Hzx_2(ii,j)=bFLAG(ii)*psi_Hzx_2(ii,j)+cFLAG(ii)*(Ey(i,j)-Ey(i+1,j))/dx
+   psi_Hzx_2(ii,j)=bh_x(ii)*psi_Hzx_2(ii,j)+ch_x(ii)*(Ey(i,j)-Ey(i+1,j))/dx
    Hz(i,j)=Hz(i,j)+dt_mu0*psi_Hzx_2(ii,j)
    ii=ii-1
   enddo
@@ -527,89 +524,56 @@ if(myrank==0)then !rank=0, here PML in y-direction is only applied to the bottom
    Hz(i,j)=Hz(i,j)+dt_mu0*psi_Hzy_1(i,j)
   enddo
  enddo
-
-!~~~~ incident ~~~~!
- do j=1,N_loc-1
-  Hz_inc(j)=Hz_inc(j)+dt_mu0*(Ex_inc(j+1)-Ex_inc(j))*den_h_z(j)
- enddo
-    
- j=N_loc
-  Hz_inc(j)=Hz_inc(j)+dt_mu0*(Ex_get_inc-Ex_inc(j))*den_h_z(j)
-
-!  PML for bottom Hz [bottom only here! since myrank=0], y-direction
- do j=1,npml-1
-  psi_Hzy_1_inc(j)=bh_y(j)*psi_Hzy_1_inc(j)+ch_y(j)*(Ex_inc(j+1)-Ex_inc(j))/dy
-  Hz_inc(j)=Hz_inc(j)+dt_mu0*psi_Hzy_1_inc(j)
- enddo
-endif
+ 
+endif !myrank == 0
 
 if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
  do i=1,Nx-1
   do j=1,N_loc-1
-   Hz(i,j)=Hz(i,j)+dt_mu0*((Ey(i,j)-Ey(i+1,j))*den_h_z(i)+ &
-			               (Ex(i,j+1)-Ex(i,j))*den_h_z(j))
+   Hz(i,j)=Hz(i,j)+dt_mu0*((Ey(i,j)-Ey(i+1,j))*den_hx(i)+ &
+			               (Ex(i,j+1)-Ex(i,j))*den_hy(j))
   enddo
     
   j=N_loc
-   Hz(i,j)=Hz(i,j)+dt_mu0*((Ey(i,j)-Ey(i+1,j))*den_h_z(i)+ &
-			               (Ex_get(i)-Ex(i,j))*den_h_z(j))
+   Hz(i,j)=Hz(i,j)+dt_mu0*((Ey(i,j)-Ey(i+1,j))*den_hx(i)+ &
+			               (Ex_get(i)-Ex(i,j))*den_hy(j))
  enddo
 
  do j=1,N_loc
 !  PML for left Hz, x-direction
   do i=1,npml-1
-   psi_Hzx_1(i,j)=bh_y(i)*psi_Hzx_1(i,j)+ch_y(i)*(Ey(i,j)-Ey(i+1,j))/dx
+   psi_Hzx_1(i,j)=bh_x(i)*psi_Hzx_1(i,j)+ch_x(i)*(Ey(i,j)-Ey(i+1,j))/dx
    Hz(i,j)=Hz(i,j)+dt_mu0*psi_Hzx_1(i,j)
   enddo
 !  PML for right Hz, x-direction
   ii=npml-1
   do i=Nx+1-npml,Nx-1
-   psi_Hzx_2(ii,j)=bFLAG(ii)*psi_Hzx_2(ii,j)+cFLAG(ii)*(Ey(i,j)-Ey(i+1,j))/dx
+   psi_Hzx_2(ii,j)=bh_x(ii)*psi_Hzx_2(ii,j)+ch_x(ii)*(Ey(i,j)-Ey(i+1,j))/dx
    Hz(i,j)=Hz(i,j)+dt_mu0*psi_Hzx_2(ii,j)
    ii=ii-1
   enddo
  enddo
 
-!~~~~ incident ~~~~!
- do j=1,N_loc-1
-  Hz_inc(j)=Hz_inc(j)+dt_mu0*(Ex_inc(j+1)-Ex_inc(j))*den_h_z(j)
- enddo
-    
- j=N_loc
-  Hz_inc(j)=Hz_inc(j)+dt_mu0*(Ex_get_inc-Ex_inc(j))*den_h_z(j)
-
-! scattered/total field updates
- if(myrank==mj0)then
-  do i=i0,i1-1
-   Hz(i,j0-1)=Hz(i,j0-1)-dt_mu0*Ex_inc(j0)/dy
-  enddo
- endif
- 
- if(myrank==mj1)then
-  do i=i0,i1-1
-   Hz(i,j1)=Hz(i,j1)+dt_mu0*Ex_inc(j1)/dy
-  enddo
- endif
-endif
+endif ! 0 < myrank < nprocs-1
 
 if(myrank==(nprocs-1))then !rank=(nprocs-1), here PML in y-direction is only applied to the top part
  do i=1,Nx-1
   do j=1,N_loc-1
-   Hz(i,j)=Hz(i,j)+dt_mu0*((Ey(i,j)-Ey(i+1,j))*den_h_z(i)+ &
-			               (Ex(i,j+1)-Ex(i,j))*den_h_z(j))
+   Hz(i,j)=Hz(i,j)+dt_mu0*((Ey(i,j)-Ey(i+1,j))*den_hx(i)+ &
+			               (Ex(i,j+1)-Ex(i,j))*den_hy(j))
   enddo
  enddo
  
  do j=1,N_loc
 !  PML for left Hz, x-direction
   do i=1,npml-1
-   psi_Hzx_1(i,j)=bh_y(i)*psi_Hzx_1(i,j)+ch_y(i)*(Ey(i,j)-Ey(i+1,j))/dx
+   psi_Hzx_1(i,j)=bh_x(i)*psi_Hzx_1(i,j)+ch_x(i)*(Ey(i,j)-Ey(i+1,j))/dx
    Hz(i,j)=Hz(i,j)+dt_mu0*psi_Hzx_1(i,j)
   enddo
 !  PML for right Hz, x-direction
   ii=npml-1
   do i=Nx+1-npml,Nx-1
-   psi_Hzx_2(ii,j)=bFLAG(ii)*psi_Hzx_2(ii,j)+cFLAG(ii)*(Ey(i,j)-Ey(i+1,j))/dx
+   psi_Hzx_2(ii,j)=bh_x(ii)*psi_Hzx_2(ii,j)+ch_x(ii)*(Ey(i,j)-Ey(i+1,j))/dx
    Hz(i,j)=Hz(i,j)+dt_mu0*psi_Hzx_2(ii,j)
    ii=ii-1
   enddo
@@ -619,25 +583,13 @@ if(myrank==(nprocs-1))then !rank=(nprocs-1), here PML in y-direction is only app
  do i=1,Nx-1    
   jj=npml-1
   do j=N_loc+1-npml,N_loc-1
-   psi_Hzy_2(i,jj)=bFLAG(jj)*psi_Hzy_2(i,jj)+cFLAG(jj)*(Ex(i,j+1)-Ex(i,j))/dy
+   psi_Hzy_2(i,jj)=bh_y(jj)*psi_Hzy_2(i,jj)+ch_y(jj)*(Ex(i,j+1)-Ex(i,j))/dy
    Hz(i,j)=Hz(i,j)+dt_mu0*psi_Hzy_2(i,jj)
    jj=jj-1
   enddo
  enddo
 
-!~~~~ incident ~~~~!
- do j=1,N_loc-1
-  Hz_inc(j)=Hz_inc(j)+dt_mu0*(Ex_inc(j+1)-Ex_inc(j))*den_h_z(j)
- enddo
-
-!  PML for top Hz [top only here! since myrank=(nrpocs-1)], y-direction
- jj=npml-1
- do j=N_loc+1-npml,N_loc-1
-  psi_Hzy_2_inc(jj)=bFLAG(jj)*psi_Hzy_2_inc(jj)+cFLAG(jj)*(Ex_inc(j+1)-Ex_inc(j))/dy
-  Hz_inc(j)=Hz_inc(j)+dt_mu0*psi_Hzy_2_inc(jj)
-  jj=jj-1
- enddo
-endif
+endif ! myrank == nprocs-1
 
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
@@ -651,12 +603,9 @@ endif
     do i=1,Nx-1
      Hz_send(i)=Hz(i,N_loc)
     enddo
-    Hz_send_inc=Hz_inc(N_loc)
     call MPI_SEND(Hz_send,(Nx-1),MPI_doUBLE_PRECISION,j,itag,MPI_COMM_WORLD,ierr)
-    call MPI_SEND(Hz_send_inc,1,MPI_doUBLE_PRECISION,j,itag1,MPI_COMM_WORLD,ierr)
    elseif(myrank==j)then
     call MPI_RECV(Hz_get,(Nx-1),MPI_doUBLE_PRECISION,(j-1),itag,MPI_COMM_WORLD,istatus,ierr)
-    call MPI_RECV(Hz_get_inc,1,MPI_doUBLE_PRECISION,(j-1),itag1,MPI_COMM_WORLD,istatus,ierr)
   endif!send_recv
  enddo!nprocs
  
@@ -675,66 +624,31 @@ if(myrank==0)then !rank=0, here PML in y-direction is only applied to the bottom
   enddo
  enddo
 
-!~~~ incident ~~~!
- do j=2,N_loc
-  Ex_inc(j)=Ex_inc(j)+dt_eps0*(Hz_inc(j)-Hz_inc(j-1))*den_ey(j)
- enddo
-   
-!  PML for bottom Ex [bottom only here! since myrank=0], y-direction
- do j=2,npml
-  psi_Exy_1_inc(j)=be_y(j)*psi_Exy_1_inc(j)+ce_y(j)*(Hz_inc(j)-Hz_inc(j-1))/dy
-  Ex_inc(j)=Ex_inc(j)+dt_eps0*psi_Exy_1_inc(j)
- enddo
-endif
+endif ! myrank == 0
 
 if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
-! do i=1,Nx-1
-!  j=1
+ do i=1,Nx-1
+  j=1
 !   if(FBx(i,j))then
 !     tmpE=C1*Ex(i,j)+C3*(Hz(i,j)-Hz_get(i))*den_ey(j)-C4*PDx(i,j)
 !     PDx(i,j)=A1*PDx(i,j)+A2*(tmpE+Ex(i,j))
 !     Ex(i,j)=tmpE
 !    else
-!     Ex(i,j)=Ex(i,j)+dt_eps0*(Hz(i,j)-Hz_get(i))*den_ey(j)
+     Ex(i,j)=Ex(i,j)+dt_eps0*(Hz(i,j)-Hz_get(i))*den_ey(j)
 !   endif
-!  
-!  do j=2,N_loc
+  
+  do j=2,N_loc
 !   if(FBx(i,j))then
 !     tmpE=C1*Ex(i,j)+C3*(Hz(i,j)-Hz(i,j-1))*den_ey(j)-C4*PDx(i,j)
 !     PDx(i,j)=A1*PDx(i,j)+A2*(tmpE+Ex(i,j))
 !     Ex(i,j)=tmpE
 !    else
-!     Ex(i,j)=Ex(i,j)+dt_eps0*(Hz(i,j)-Hz(i,j-1))*den_ey(j)
+     Ex(i,j)=Ex(i,j)+dt_eps0*(Hz(i,j)-Hz(i,j-1))*den_ey(j)
 !   endif
-!  enddo
-! enddo
-
-!~~~ incident ~~~!
- j=1
-  Ex_inc(j)=Ex_inc(j)+dt_eps0*(Hz_inc(j)-Hz_get_inc)*den_ey(j)
-   
- do j=2,N_loc
-  if((myrank==ms).and.(j==js))then !laser pulse
-    Ex_inc(j)=Ex_inc(j)+dt_eps0*(Hz_inc(j)-Hz_inc(j-1))/dy+ &
- 	                    pulse(n)
-   else
-	Ex_inc(j)=Ex_inc(j)+dt_eps0*(Hz_inc(j)-Hz_inc(j-1))*den_ey(j)
-  endif
+  enddo
  enddo
 
-! scattered/total field updates
- if(myrank==mj0)then
-  do i=i0,i1-1
-   Ex(i,j0)=Ex(i,j0)-dt_eps0*Hz_inc(j0-1)/dy
-  enddo
- endif
-
- if(myrank==mj1)then
-  do i=i0,i1-1
-   Ex(i,j1)=Ex(i,j1)+dt_eps0*Hz_inc(j1)/dy
-  enddo
- endif
-endif
+endif ! 0 < myrank < nprocs-1
 
 if(myrank==(nprocs-1))then !rank=(nprocs-1), here PML in y-direction is only applied to the top part
  j=1
@@ -758,22 +672,7 @@ if(myrank==(nprocs-1))then !rank=(nprocs-1), here PML in y-direction is only app
   enddo
  enddo
 
-!~~~ incident ~~~!
- j=1
-  Ex_inc(j)=Ex_inc(j)+dt_eps0*(Hz_inc(j)-Hz_get_inc)*den_ey(j)
-   
- do j=2,N_loc-1
-  Ex_inc(j)=Ex_inc(j)+dt_eps0*(Hz_inc(j)-Hz_inc(j-1))*den_ey(j)
- enddo
-
-!  PML for top Ex [top only here! since myrank=(nrpocs-1)], y-direction
- jj=npml
- do j=N_loc+1-npml,N_loc-1
-  psi_Exy_2_inc(jj)=be_y(jj)*psi_Exy_2_inc(jj)+ce_y(jj)*(Hz_inc(j)-Hz_inc(j-1))/dy
-  Ex_inc(j)=Ex_inc(j)+dt_eps0*psi_Exy_2_inc(jj)
-  jj=jj-1
- enddo
-endif
+endif ! myrank == nprocs-1
 
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
@@ -808,28 +707,7 @@ if((myrank>=0).and.(myrank<(nprocs-1)))then
   enddo
  enddo
 
-! scattered/total field updates
- if(myrank==mj0)then
-  do j=j0,N_loc
-   Ey(i0,j)=Ey(i0,j)+dt_eps0*Hz_inc(j)/dy
-   Ey(i1,j)=Ey(i1,j)-dt_eps0*Hz_inc(j)/dy
-  enddo
- endif
-
- if((myrank>mj0).and.(myrank<mj1))then
-  do j=1,N_loc
-   Ey(i0,j)=Ey(i0,j)+dt_eps0*Hz_inc(j)/dy
-   Ey(i1,j)=Ey(i1,j)-dt_eps0*Hz_inc(j)/dy
-  enddo
- endif
-
- if(myrank==mj1)then
-  do j=1,j1-1
-   Ey(i0,j)=Ey(i0,j)+dt_eps0*Hz_inc(j)/dy
-   Ey(i1,j)=Ey(i1,j)-dt_eps0*Hz_inc(j)/dy
-  enddo
- endif
-endif
+endif ! 0 <= myrank < nprocs-1
 
 if(myrank==(nprocs-1))then
  do i=2,Nx-1
@@ -853,6 +731,8 @@ if(myrank==(nprocs-1))then
   enddo
  enddo
 endif
+
+enddo !Nt
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !  END TIME STEP
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
