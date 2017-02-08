@@ -30,6 +30,8 @@ double precision :: dt_eps0, dt_mu0
 
 double precision, parameter :: H0 = 1.0, wavelength = length_add
 double precision, parameter :: omega = 2*pi*c/wavelength
+double precision, parameter :: x_source = 0.0, y_source = 0.0
+double precision, parameter :: x_detect = x_source, y_detect = y_source
 
 ! Drude Specification
 
@@ -59,8 +61,8 @@ integer itag,ireq,itag1,itag2,itag3,itag4,itag5,itag6
 !----------------- Minimum Resolution Variables --------------------
 !-------------------------------------------------------------------
 
- double precision, parameter :: y0_min = -200E-9, yM_min = 200E-9
- double precision, parameter :: x0_min = -200E-9, xM_min = 200E-9
+ double precision, parameter :: y0_min = -100E-9, yM_min = 100E-9
+ double precision, parameter :: x0_min = -320E-9, xM_min = 320E-9
 
  double precision, parameter ::	               &
       dx_max = 1.0E-9 , dy_max = dx_max 
@@ -94,7 +96,7 @@ integer itag,ireq,itag1,itag2,itag3,itag4,itag5,itag6
       Nt_max = res_array(Nr)*Nt_min,                  &                
       Nx_max = res_array(Nr)*(Nx_min-1) + length_add/dx_min + 1,                  &
       Ny_max = res_array(Nr)*(Ny_min-1) + length_add/dx_min + 1,                  &
-      N_loc_max = res_array(Nr)*N_loc_min + length_add/dx_min!Different for myrank = 0 and nprocs-1
+      N_loc_max = res_array(Nr)*N_loc_min + length_add/dx_min !Interior processors inherit (npml_add) unused y-spaces
 
       
    INTEGER, parameter :: &
@@ -199,12 +201,12 @@ function Vacuum_CPML() result(P_sum_fdtd)
 
    integer :: Nt, Nx, Ny, N_loc
       
-!  ..................................
-!  Convergence Detection Zone
-   integer :: i_start, i_end, & 
-              j_start, j_end, 
-   integer ::                                    
-      isource, jsource
+!!  ..................................
+!!  Convergence Detection Zone
+!   integer :: i_start, i_end, & 
+!              j_start, j_end, 
+!   integer ::                                    
+!      isource, jsource
 
    integer ::
       npml
@@ -232,13 +234,13 @@ if(myrank == 0 .or. myrank == nprocs-1)then !PML Processors take on all of the e
  N_loc = res_array(a)*N_loc_min + pml_add(b)*length_add/dx
 endif
 
- isource = (Nx-1)/2 + 1
- jsource = (Ny-1)/2 + 1
-
- i_start = isource
- j_start = jsource
- i_end   = i_start   
- j_end   = j_start
+! isource = (Nx-1)/2 + 1
+! jsource = (Ny-1)/2 + 1
+!
+! i_start = isource
+! j_start = jsource
+! i_end   = i_start   
+! j_end   = j_start
 
 !
 !~~~ Specify Source ~~~!
@@ -343,11 +345,11 @@ do i=1,npml
 enddo
 
 do i=1,npml-1
- sigh_y(i)=sigmaCPML*((npml-i-0.5)/(npml-1.0))**m
- alphah_y(i)=alphaCPML*((i-0.5)/(npml-1.0))**ma
- kappah_y(i)=1.0+(kappaCPML-1.0)*((npml-i-0.5)/(npml-1.0))**m
- bh_y(i)=exp(-(sigh_y(i)/kappah_y(i)+alphah_y(i))*dt/eps0)
- ch_y(i)=sigh_y(i)*(bh_y(i)-1.0)/(sigh_y(i)+kappah_y(i)*alphah_y(i))/kappah_y(i)
+ sigh_x(i)=sigmaCPML*((npml-i-0.5)/(npml-1.0))**m
+ alphah_x(i)=alphaCPML*((i-0.5)/(npml-1.0))**ma
+ kappah_x(i)=1.0+(kappaCPML-1.0)*((npml-i-0.5)/(npml-1.0))**m
+ bh_x(i)=exp(-(sigh_x(i)/kappah_x(i)+alphah_x(i))*dt/eps0)
+ ch_x(i)=sigh_x(i)*(bh_x(i)-1.0)/(sigh_x(i)+kappah_x(i)*alphah_x(i))/kappah_x(i)
 enddo
 
 do j=1,npml
@@ -374,18 +376,18 @@ do j=1,npml-1
  ch_y(j)=sigh_y(j)*(bh_y(j)-1.0)/(sigh_y(j)+kappah_y(j)*alphah_y(j))/kappah_y(j)
 enddo
 
-den_h_z=1.0/dy
+den_hy=1.0/dy
 if(myrank==0)then
   do j=1,N_loc
    if(j<=(npml-1))then
-    den_h_z(j)=1.0/(kappah_y(j)*dy)
+    den_hy(j)=1.0/(kappah_y(j)*dy)
    endif
   enddo
  elseif(myrank==(nprocs-1))then
   jj=npml-1
   do j=1,(N_loc-1)
    if(j>=(N_loc+1-npml))then
-     den_h_z(j)=1.0/(kappaFLAG(jj)*dy)
+     den_hy(j)=1.0/(kappah_y(jj)*dy)
      jj=jj-1
    endif
   enddo
@@ -411,12 +413,12 @@ endif
 ii=npml-1
 do i=1,Nx-1
  if(i<=(npml-1))then
-   den_h_z(i)=1.0/(kappah_y(i)*dx)
+   den_hx(i)=1.0/(kappah_x(i)*dx)
   elseif(i>=(Nx+1-npml))then
-   den_h_z(i)=1.0/(kappaFLAG(ii)*dx)
+   den_hx(i)=1.0/(kappah_x(ii)*dx)
    ii=ii-1
   else
-   den_h_z(i)=1.0/dx
+   den_hx(i)=1.0/dx
  endif
 enddo
 
@@ -538,7 +540,19 @@ if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
    Hz(i,j)=Hz(i,j)+dt_mu0*((Ey(i,j)-Ey(i+1,j))*den_hx(i)+ &
 			               (Ex_get(i)-Ex(i,j))*den_hy(j))
  enddo
+ 
+!
+!~~~ Source ~~~!
+!
 
+ do j = 1,N_loc
+  do i = 1,Nx
+   if(x(i) == xsource .and. y(j) == ysource)then
+    Hz(i,j) = Hz(i,j) + pulse(n)
+   endif
+  enddo
+ enddo
+ 
  do j=1,N_loc
 !  PML for left Hz, x-direction
   do i=1,npml-1
