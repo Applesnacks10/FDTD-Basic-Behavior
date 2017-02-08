@@ -71,7 +71,7 @@ integer itag,ireq,itag1,itag2,itag3,itag4,itag5,itag6
       dt_max = dx_max/(2.0*c)
 
    INTEGER, parameter :: &
-      Nt_min = 100000,                     & 
+      Nt_min = 10000,                     & 
       Nx_min = 200 + 1,                  & 
       Ny_min = 640 + 1,                  &
       N_loc_min = 20
