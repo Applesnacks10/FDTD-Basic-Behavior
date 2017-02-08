@@ -2,8 +2,8 @@ program Convergence_fdtd3D_CPML
 implicit none
 include 'mpif.h'
 
-integer, parameter :: Nr = 3
-integer, parameter, dimension(Nr) :: res_array = (/1,2,4/)
+integer, parameter :: Nr = 5
+integer, parameter, dimension(Nr) :: res_array = (/1,2,3,4,5/)
 integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
@@ -210,6 +210,20 @@ function Vacuum_CPML() result(P_sum)
 !      isource, jsource
    double precision :: sigmaCPML
    double precision :: dt_eps0, dt_mu0
+   
+!
+!~~~ Grid Return ~~~!
+!
+double precision, parameter :: y_return1 = y_source - 10*dx_max, y_return2 = y_source + 10*dx_max
+double precision, parameter :: x_return1 = x_source - 10*dx_max, x_return2 = x_source + 10*dx_max 
+integer, parameter :: Nreturn = 2
+integer n_return(Nreturn)
+integer i_return1, i_return2, j_return1, j_return2
+logical GR
+ character(len = 9), parameter :: prefix = 'Snapshot-'
+ character(len = 4), parameter :: suffix = '.dat'
+ character(len = 2), parameter :: str_Ex = 'Ex', str_Hz = 'Hz', str_Ey = 'Ey'
+ character(len = 50) filename, str_n
 
 !-------------------------------------------------------------------
 !----------------------- Variable Assignment -----------------------
@@ -292,6 +306,51 @@ do j=1,N_loc
  yM2(j)=y0+dy*(j_glob-1)+dy/2.0
 
 enddo
+
+!~~~ Grid Return ~~~!
+
+
+ if( (y(1)<=y_return2).and.(y(N_loc)>=y_return1) )then
+  GR = .true. !Processor has at least one grid-point within the return-zone
+ else
+  GR = .false.
+ endif
+ 
+ if(GR)then !Assign local return boundaries
+  do j = 1,N_loc
+   if( y(j) >= y_return1 )then !lower y-bound
+    j_return1 = j
+    exit
+   endif
+  enddo
+  do j = 1,N_loc
+   if( y(N_loc-j+1) <= y_return2 )then !upper y-bound
+    j_return2 = N_loc-j+1
+    exit
+   endif
+  enddo
+  
+  do i = 1,Nx
+   if( x(i) >= x_return1 )then !lower x-bound
+    i_return1 = i
+    exit
+   endif
+  enddo
+  do i = 1,Nx
+   if( x(Nx-i+1) <= x_return2 )then !upper x-bound
+    i_return2 = Nx-i+1
+    exit
+   endif
+  enddo
+ endif
+  
+! j_return1 = 1
+! j_return2 = N_loc
+! i_return1 = 1
+! i_return2 = Nx-1 
+
+ n_return(1) = Nt/100
+ n_return(2) = Nt
 
 !!FBx=.false.
 !!FBy=.false.
@@ -745,6 +804,58 @@ if(myrank==(nprocs-1))then
   enddo
  enddo
 endif
+
+!--------------------------------------------------------------------------!
+!~~~~~~~~~~~~~~~~~~~~~~~~==========================~~~~~~~~~~~~~~~~~~~~~~~~!
+!--------------------------------------------------------------------------!
+!~~~~~~~~~~~~~~~~~~~~~~~~        Grid Return         ~~~~~~~~~~~~~~~~~~~~~~!
+!--------------------------------------------------------------------------!
+!~~~~~~~~~~~~~~~~~~~~~~~~==========================~~~~~~~~~~~~~~~~~~~~~~~~!
+!--------------------------------------------------------------------------!
+
+if( b == 1 .and. (a == 1 .or. a == 3))then
+
+if(Nreturn > 0.and.GR)then 
+ do k = 1,Nreturn
+  if(k == n_return(a))then
+  
+   nn = 10 + a
+   write(str_n,*) n
+   
+   if(a == 1)then
+    filename = str_Hz//trim(adjustl(str_n))//'a=1'//suffix
+   elseif(a == 3)then
+    filename = str_Hz//trim(adjustl(str_n))//'a=3'//suffix
+   endif
+   
+   !filename = prefix//filename
+   open(file=trim(adjustl(filename)),position = 'append',unit=k+nn)
+    do j = j_return1,j_return2
+     write(k+nn,*) Hz(i_return1:i_return2,j)
+    enddo
+   close(unit=k+nn)
+  
+   
+   write(str_n,*) n
+   
+   if(a == 1)then
+    filename = str_Ex//trim(adjustl(str_n))//'a=1'//suffix
+   elseif(a == 3)then
+    filename = str_Ex//trim(adjustl(str_n))//'a=3'//suffix
+   endif
+   
+   !filename = prefix//filename
+   open(file=trim(adjustl(filename)),position = 'append',unit=k+nn*2)
+    do j = j_return1,j_return2
+     write(k+nn*2,*) Ex(i_return1:i_return2,j)
+    enddo
+   close(unit=k+nn*2) 
+
+  endif
+ enddo
+endif
+
+endif !GR
 
 enddo !Nt
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
