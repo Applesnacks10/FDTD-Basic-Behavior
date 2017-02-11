@@ -74,7 +74,7 @@ integer itag,ireq,itag1,itag2,itag3,itag4,itag5,itag6
       Nt_min = 10000,                     & 
       Nx_min = 200 + 1,                  & 
       Ny_min = 640 + 1,                  &
-      N_loc_min = 20*4
+      N_loc_min = 20*8
       
    INTEGER, parameter :: &
       npml_min = 9 + 1
