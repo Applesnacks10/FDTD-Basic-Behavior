@@ -277,7 +277,7 @@ pulse=0.0
 do n=1,Nt
  t=dt*dble(n)
  
- pulse = H0*sin(omega*t)
+ pulse(n) = H0*sin(omega*t)
 
 enddo
  
@@ -354,7 +354,7 @@ enddo
 ! i_return1 = 1
 ! i_return2 = Nx-1 
 
- nn = 20
+ nn = 24
  n_return(1) = Nt/100
  n_return(2) = Nt
 
@@ -837,7 +837,7 @@ if(Nreturn > 0.and.GR)then
    !filename = prefix//filename
    open(file=trim(adjustl(filename)),position = 'append',unit=nn)
     do j = j_return1,j_return2
-     write(k+nn,*) Hz(i_return1:i_return2,j)
+     write(nn,*) Hz(i_return1:i_return2,j)
     enddo
    close(unit=nn)
   
