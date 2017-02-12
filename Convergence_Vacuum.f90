@@ -174,9 +174,9 @@ do a = 1,Nr
  
 
  if(Rel_error(a) /= 0.0)then 
-  open(file = 'Relative Errors.dat', position = 'append', unit = 11)
-    write(11,*) res_array(a), Rel_error(a)
-  close(unit = 11)
+  open(file = 'Relative Errors.dat', position = 'append', unit = 99)
+    write(99,*) res_array(a), Rel_error(a)
+  close(unit = 99)
  endif
  
 enddo! Nr resolutions
@@ -868,7 +868,10 @@ enddo !Nt
 !  END TIME STEP
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !.:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:.
-    WRITE(*,*)"done time-stepping"
+
+if(myrank == 0)then
+ WRITE(*,*)"done time-stepping"
+endif
     
 end function Vacuum_CPML
 
