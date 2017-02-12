@@ -181,6 +181,8 @@ do a = 1,Nr
  
 enddo! Nr resolutions
 
+ call MPI_FINALIZE(ierr)
+
 !-----------------------------------------------------------------------
 !-----------------------------------------------------------------------
 !------------------------ Internal Function ----------------------------
@@ -869,7 +871,5 @@ enddo !Nt
     WRITE(*,*)"done time-stepping"
     
 end function Vacuum_CPML
-
- call MPI_FINALIZE(ierr)
 
 end !Main
