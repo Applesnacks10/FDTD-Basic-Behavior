@@ -605,17 +605,20 @@ if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
 !~~~ Source and Detection~~~!
 !
 
- do j = 1,N_loc
-  do i = 1,Nx
-   if(x(i) == x_source .and. y(j) == y_source)then
+if(myrank == (nprocs-1)/2)then
+! do j = 1,N_loc
+!  do i = 1,Nx
+!   if(x(i) == x_source .and. y(j) == y_source)then
+   i = (Nx-1)/2
+   j = N_loc
     Hz(i,j) = Hz(i,j) + pulse(n)
-   endif
-   if(x(i) == x_detect .and. y(j) == y_detect)then
+!   endif
+!   if(x(i) == x_detect .and. y(j) == y_detect)then
     P_sum = P_sum + (Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0
-   endif
-  enddo
- enddo
- 
+!   endif
+!  enddo
+! enddo
+endif
 
  
  do j=1,N_loc
