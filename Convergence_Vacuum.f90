@@ -1,4 +1,4 @@
-program Convergence_fdtd3D_CPML
+program Convergence_Vacuum
 implicit none
 include 'mpif.h'
 
