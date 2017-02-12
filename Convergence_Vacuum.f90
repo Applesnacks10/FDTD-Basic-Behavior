@@ -27,7 +27,7 @@ double precision, parameter :: eps_delectric=1.0
 !~~~ Source ~~~!
 !
 
-double precision, parameter :: H0 = 1.0, wavelength = length_add
+double precision, parameter :: H0 = 1.0/c, wavelength = length_add
 double precision, parameter :: omega = 2*pi*c/wavelength
 double precision, parameter :: x_source = 0.0, y_source = 0.0
 double precision, parameter :: x_detect = x_source, y_detect = y_source
@@ -172,9 +172,12 @@ do a = 1,Nr
  
  Rel_error(a) = abs((Convergence(a,2) - Convergence(a,1))/Convergence(a,1))
  
- open(file = 'Relative Errors.dat', position = 'append', unit = 40)
-   write(40,*) res_array(a), Rel_error(a)
- close(unit = 40)
+
+ if(Rel_error(a) /= 0.0)then 
+  open(file = 'Relative Errors.dat', position = 'append', unit = 11)
+    write(11,*) res_array(a), Rel_error(a)
+  close(unit = 11)
+ endif
  
 enddo! Nr resolutions
 
@@ -349,6 +352,7 @@ enddo
 ! i_return1 = 1
 ! i_return2 = Nx-1 
 
+ nn = 20
  n_return(1) = Nt/100
  n_return(2) = Nt
 
@@ -815,11 +819,11 @@ endif
 
 if( b == 1 .and. (a == 1 .or. a == 3))then
 
-if(Nreturn > 0.and.GR)then 
- do k = 1,Nreturn
-  if(k == n_return(a))then
+if(Nreturn > 0.and.GR)then
+ do k = 1,Nreturn 
+  if(n = n_return(k))then
   
-   nn = 10 + a
+   nn = nn + 1
    write(str_n,*) n
    
    if(a == 1)then
@@ -829,11 +833,11 @@ if(Nreturn > 0.and.GR)then
    endif
    
    !filename = prefix//filename
-   open(file=trim(adjustl(filename)),position = 'append',unit=k+nn)
+   open(file=trim(adjustl(filename)),position = 'append',unit=nn)
     do j = j_return1,j_return2
      write(k+nn,*) Hz(i_return1:i_return2,j)
     enddo
-   close(unit=k+nn)
+   close(unit=nn)
   
    
    write(str_n,*) n
@@ -845,11 +849,11 @@ if(Nreturn > 0.and.GR)then
    endif
    
    !filename = prefix//filename
-   open(file=trim(adjustl(filename)),position = 'append',unit=k+nn*2)
+   open(file=trim(adjustl(filename)),position = 'append',unit=nn*3)
     do j = j_return1,j_return2
-     write(k+nn*2,*) Ex(i_return1:i_return2,j)
+     write(nn*3,*) Ex(i_return1:i_return2,j)
     enddo
-   close(unit=k+nn*2) 
+   close(unit=nn*3) 
 
   endif
  enddo
@@ -865,5 +869,7 @@ enddo !Nt
     WRITE(*,*)"done time-stepping"
     
 end function Vacuum_CPML
+
+ call MPI_FINALIZE(ierr)
 
 end !Main
