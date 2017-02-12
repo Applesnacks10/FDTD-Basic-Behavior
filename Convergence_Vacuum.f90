@@ -821,7 +821,7 @@ if( b == 1 .and. (a == 1 .or. a == 3))then
 
 if(Nreturn > 0.and.GR)then
  do k = 1,Nreturn 
-  if(n = n_return(k))then
+  if(n == n_return(k))then
   
    nn = nn + 1
    write(str_n,*) n
