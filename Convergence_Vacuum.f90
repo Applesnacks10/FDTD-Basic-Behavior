@@ -893,6 +893,7 @@ enddo !Nt
 !.:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:.
 
 if(myrank == 0)then
+ write(*,*) "P_sum = ", P_sum
  WRITE(*,*)"done time-stepping"
 endif
     
