@@ -280,7 +280,7 @@ do n=1,Nt
  pulse(n) = H0*sin(omega*t)
 
 enddo
- 
+
 !
 !~~~ physical grid ~~~!
 !
@@ -532,6 +532,31 @@ Hz_send=0.0
    write(*,*)"pml_add: ", pml_add(b)
    write(*,*)"begin time-stepping"
   endif
+
+if(myrank == 0.or.myrank == (nprocs)/2.or.myrank == nprocs-1)then
+ if( b == 1 .and. a == 1 )then
+   nn = 30 + myrank
+   write(str_n,*) myrank
+   
+   filename = str_Hz//trim(adjustl(str_n))//suffix
+   open(file = trim(adjustl(filename)), unit = nn)
+    write(nn,*) Hz
+   close(unit = nn)
+   
+   filename = str_Ex//trim(adjustl(str_n))//suffix
+   open(file = trim(adjustl(filename)), unit = nn*4)
+    write(nn*4,*) Ex
+   close(unit = nn*4)
+   
+   filename = 'pulse100'
+   if(myrank == 0)then
+    open(file = trim(adjustl(filename)), unit = 29)
+     write(29,*) pulse(1:72)
+    close(unit = 29)
+   endif
+   
+ endif
+endif !GR
 
 do n=1,Nt
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
@@ -865,33 +890,6 @@ endif
 !endif
 !
 !endif !GR
-
-if(myrank == 0.or.myrank == (nprocs)/2.or.myrank == nprocs-1)then
- if( b == 1 .and. a == 1 )then
-  if(n == Nt)then
-   nn = 30 + myrank
-   write(str_n,*) myrank
-   
-   filename = str_Hz//trim(adjustl(str_n))//suffix
-   open(file = trim(adjustl(filename)), unit = nn)
-    write(nn,*) Hz
-   close(unit = nn)
-   
-   filename = str_Ex//trim(adjustl(str_n))//suffix
-   open(file = trim(adjustl(filename)), unit = nn*4)
-    write(nn*4,*) Ex
-   close(unit = nn*4)
-   
-   filename = 'pulse100'
-   if(myrank == 0)then
-    open(file = trim(adjustl(filename)), unit = 29)
-     write(29,*) pulse(1:100)
-    close(unit = 29)
-   endif
-   
-  endif
- endif
-endif !GR
 
 enddo !Nt
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
