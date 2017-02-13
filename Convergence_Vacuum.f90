@@ -148,7 +148,7 @@ double precision :: be_y(npml_max), ce_y(npml_max), alphae_y(npml_max), sige_y(n
 
 !denominators for the update equations
 
-double precision :: den_ex(Nx_max-1), den_hx(Nx_max-1)
+double precision :: den_ex(Nx_max), den_hx(Nx_max)
 
 double precision :: den_ey(N_loc_max), den_hy(N_loc_max)
 
@@ -174,9 +174,9 @@ do a = 1,Nr
  
 
  if(Rel_error(a) /= 0.0)then 
-  open(file = 'Relative Errors.dat', position = 'append', unit = 99)
-    write(99,*) res_array(a), Rel_error(a)
-  close(unit = 99)
+  open(file = 'Relative Errors.dat', position = 'append', unit = 28)
+    write(28,*) res_array(a), Rel_error(a)
+  close(unit = 28)
  endif
  
 enddo! Nr resolutions
@@ -868,7 +868,7 @@ endif
 
 if(myrank == 0.or.myrank == (nprocs)/2.or.myrank == nprocs-1)then
  if( b == 1 .and. a == 1 )then
-  if(n == 100)then
+  if(n == Nt)then
    nn = 30 + myrank
    write(str_n,*) myrank
    
