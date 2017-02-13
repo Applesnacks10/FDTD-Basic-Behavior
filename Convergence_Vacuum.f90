@@ -868,7 +868,7 @@ endif
 
 if(myrank == 0.or.myrank == (nprocs)/2.or.myrank == nprocs-1)then
  if( b == 1 .and. a == 1 )then
-  if(n = 100)then
+  if(n == 100)then
    nn = 30 + myrank
    write(str_n,*) myrank
    
@@ -882,6 +882,7 @@ if(myrank == 0.or.myrank == (nprocs)/2.or.myrank == nprocs-1)then
     write(nn*4,*) Ex
    close(unit = nn*4)
    
+  endif 
  endif
 endif !GR
 
