@@ -2,8 +2,8 @@ program Convergence_Vacuum
 implicit none
 include 'mpif.h'
 
-integer, parameter :: Nr = 3
-integer, parameter, dimension(Nr) :: res_array = (/1,2,3/)
+integer, parameter :: Nr = 1
+integer, parameter, dimension(Nr) :: res_array = (/1/)
 integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
@@ -822,48 +822,68 @@ endif
 !~~~~~~~~~~~~~~~~~~~~~~~~==========================~~~~~~~~~~~~~~~~~~~~~~~~!
 !--------------------------------------------------------------------------!
 
-if( b == 1 .and. (a == 1 .or. a == 3))then
+!if( b == 1 .and. (a == 1 .or. a == 3))then
+!
+!if(Nreturn > 0.and.GR)then
+! do k = 1,Nreturn 
+!  if(n == n_return(k))then
+!  
+!   nn = nn + 1
+!   write(str_n,*) n
+!   
+!   if(a == 1)then
+!    filename = str_Hz//trim(adjustl(str_n))//'a=1'//suffix
+!   elseif(a == 3)then
+!    filename = str_Hz//trim(adjustl(str_n))//'a=3'//suffix
+!   endif
+!   
+!   !filename = prefix//filename
+!   open(file=trim(adjustl(filename)),position = 'append',unit=nn)
+!    do j = j_return1,j_return2
+!     write(nn,*) Hz(i_return1:i_return2,j)
+!    enddo
+!   close(unit=nn)
+!  
+!   
+!   write(str_n,*) n
+!   
+!   if(a == 1)then
+!    filename = str_Ex//trim(adjustl(str_n))//'a=1'//suffix
+!   elseif(a == 3)then
+!    filename = str_Ex//trim(adjustl(str_n))//'a=3'//suffix
+!   endif
+!   
+!   !filename = prefix//filename
+!   open(file=trim(adjustl(filename)),position = 'append',unit=nn*3)
+!    do j = j_return1,j_return2
+!     write(nn*3,*) Ex(i_return1:i_return2,j)
+!    enddo
+!   close(unit=nn*3) 
+!
+!  endif
+! enddo
+!endif
+!
+!endif !GR
 
-if(Nreturn > 0.and.GR)then
- do k = 1,Nreturn 
-  if(n == n_return(k))then
-  
-   nn = nn + 1
-   write(str_n,*) n
+if(myrank == 0.or.myrank == (nprocs-1)/2.or.myrank == nprocs-1)then
+ if( b == 0 .and. a == 1 )then
+  if(n == Nt)then
+   nn = 30 + myrank
+   write(str_n,*) myrank
    
-   if(a == 1)then
-    filename = str_Hz//trim(adjustl(str_n))//'a=1'//suffix
-   elseif(a == 3)then
-    filename = str_Hz//trim(adjustl(str_n))//'a=3'//suffix
-   endif
+   filename = str_Hz//trim(adjustl(str_n))//suffix
+   open(file = trim(adjustl(filename)), unit = nn)
+    write(nn,*) Hz
+   close(unit = nn)
    
-   !filename = prefix//filename
-   open(file=trim(adjustl(filename)),position = 'append',unit=nn)
-    do j = j_return1,j_return2
-     write(nn,*) Hz(i_return1:i_return2,j)
-    enddo
-   close(unit=nn)
-  
+   filename = str_Ex//trim(adjustl(str_n))//suffix
+   open(file = trim(adjustl(filename)), unit = nn*4)
+    write(nn,*) Ex
+   close(unit = nn*4)
    
-   write(str_n,*) n
-   
-   if(a == 1)then
-    filename = str_Ex//trim(adjustl(str_n))//'a=1'//suffix
-   elseif(a == 3)then
-    filename = str_Ex//trim(adjustl(str_n))//'a=3'//suffix
-   endif
-   
-   !filename = prefix//filename
-   open(file=trim(adjustl(filename)),position = 'append',unit=nn*3)
-    do j = j_return1,j_return2
-     write(nn*3,*) Ex(i_return1:i_return2,j)
-    enddo
-   close(unit=nn*3) 
-
   endif
- enddo
-endif
-
+ endif
 endif !GR
 
 enddo !Nt
