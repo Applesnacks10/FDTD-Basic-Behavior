@@ -866,7 +866,7 @@ endif
 !
 !endif !GR
 
-if(myrank == 0.or.myrank == (nprocs-1)/2.or.myrank == nprocs-1)then
+if(myrank == 0.or.myrank == (nprocs)/2.or.myrank == nprocs-1)then
  if( b == 0 .and. a == 1 )then
   if(n == Nt)then
    nn = 30 + myrank
@@ -879,8 +879,14 @@ if(myrank == 0.or.myrank == (nprocs-1)/2.or.myrank == nprocs-1)then
    
    filename = str_Ex//trim(adjustl(str_n))//suffix
    open(file = trim(adjustl(filename)), unit = nn*4)
-    write(nn,*) Ex
+    write(nn*4,*) Ex
    close(unit = nn*4)
+   
+   if(myrank == 0)then
+    open(file = trim(adjustl(filename)), unit = 29)
+     write(29,*) pulse(1:1000)
+    close(unit = 29)
+   endif
    
   endif
  endif
