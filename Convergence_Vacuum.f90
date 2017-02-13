@@ -867,8 +867,8 @@ endif
 !endif !GR
 
 if(myrank == 0.or.myrank == (nprocs)/2.or.myrank == nprocs-1)then
- if( b == 0 .and. a == 1 )then
-  if(n == Nt)then
+ if( b == 1 .and. a == 1 )then
+  if(n == 100)then
    nn = 30 + myrank
    write(str_n,*) myrank
    
