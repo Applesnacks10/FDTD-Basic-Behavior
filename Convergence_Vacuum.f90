@@ -275,7 +275,7 @@ endif
 
 pulse=0.0
 do n=1,Nt
- t=dt*dble(n)
+ t=dt*dble(n-1)
  
  pulse(n) = H0*sin(omega*t)
 
@@ -605,7 +605,7 @@ if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
 !~~~ Source and Detection~~~!
 !
 
-if(myrank == (nprocs-1)/2)then
+if(myrank == (nprocs)/2)then
 ! do j = 1,N_loc
 !  do i = 1,Nx
 !   if(x(i) == x_source .and. y(j) == y_source)then
@@ -882,9 +882,10 @@ if(myrank == 0.or.myrank == (nprocs)/2.or.myrank == nprocs-1)then
     write(nn*4,*) Ex
    close(unit = nn*4)
    
+   filename = 'pulse100'
    if(myrank == 0)then
     open(file = trim(adjustl(filename)), unit = 29)
-     write(29,*) pulse(1:1000)
+     write(29,*) pulse(1:100)
     close(unit = 29)
    endif
    
