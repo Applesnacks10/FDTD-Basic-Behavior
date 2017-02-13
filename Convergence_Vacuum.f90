@@ -868,7 +868,7 @@ endif
 
 if(myrank == 0.or.myrank == (nprocs)/2.or.myrank == nprocs-1)then
  if( b == 1 .and. a == 1 )then
-  if(n == 100)then
+  if(n == Nt)then
    nn = 30 + myrank
    write(str_n,*) myrank
    
