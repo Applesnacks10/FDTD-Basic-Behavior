@@ -27,7 +27,7 @@ double precision, parameter :: eps_delectric=1.0
 !~~~ Source ~~~!
 !
 
-double precision, parameter :: H0 = 1.0/c, wavelength = length_add
+double precision, parameter :: H0 = 1.0, wavelength = length_add
 double precision, parameter :: omega = 2*pi*c/wavelength
 double precision, parameter :: x_source = 0.0, y_source = 0.0
 double precision, parameter :: x_detect = x_source, y_detect = y_source
@@ -94,8 +94,8 @@ integer itag,ireq,itag1,itag2,itag3,itag4,itag5,itag6
 
    INTEGER, parameter :: &
       Nt_max = res_array(Nr)*Nt_min,                  &                
-      Nx_max = res_array(Nr)*(Nx_min-1) + length_add/dx_min + 1,                  &
-      Ny_max = res_array(Nr)*(Ny_min-1) + length_add/dx_min + 1,                  &
+      Nx_max = res_array(Nr)*(Nx_min-1) + 2*length_add/dx_min + 1,                  &
+      Ny_max = res_array(Nr)*(Ny_min-1) + 2*length_add/dx_min + 1,                  &
       N_loc_max = res_array(Nr)*N_loc_min + length_add/dx_min !Interior processors inherit (npml_add) unused y-spaces
 
       
@@ -533,31 +533,6 @@ Hz_send=0.0
    write(*,*)"begin time-stepping"
   endif
 
-if(myrank == 0.or.myrank == (nprocs)/2.or.myrank == nprocs-1)then
- if( b == 1 .and. a == 1 )then
-   nn = 30 + myrank
-   write(str_n,*) myrank
-   
-   filename = str_Hz//trim(adjustl(str_n))//suffix
-   open(file = trim(adjustl(filename)), unit = nn)
-    write(nn,*) Hz
-   close(unit = nn)
-   
-   filename = str_Ex//trim(adjustl(str_n))//suffix
-   open(file = trim(adjustl(filename)), unit = nn*4)
-    write(nn*4,*) Ex
-   close(unit = nn*4)
-   
-   filename = 'pulse100'
-   if(myrank == 0)then
-    open(file = trim(adjustl(filename)), unit = 29)
-     write(29,*) pulse(1:72)
-    close(unit = 29)
-   endif
-   
- endif
-endif !GR
-
 do n=1,Nt
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
@@ -890,6 +865,25 @@ endif
 !endif
 !
 !endif !GR
+
+if(myrank == 0.or.myrank == (nprocs)/2.or.myrank == nprocs-1)then
+ if( b == 1 .and. a == 1 )then
+  if(n = 100)then
+   nn = 30 + myrank
+   write(str_n,*) myrank
+   
+   filename = str_Hz//trim(adjustl(str_n))//suffix
+   open(file = trim(adjustl(filename)), unit = nn)
+    write(nn,*) Hz
+   close(unit = nn)
+   
+   filename = str_Ex//trim(adjustl(str_n))//suffix
+   open(file = trim(adjustl(filename)), unit = nn*4)
+    write(nn*4,*) Ex
+   close(unit = nn*4)
+   
+ endif
+endif !GR
 
 enddo !Nt
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
