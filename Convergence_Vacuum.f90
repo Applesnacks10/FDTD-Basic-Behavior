@@ -774,6 +774,12 @@ if((myrank>=0).and.(myrank<(nprocs-1)))then
 !  enddo
 ! enddo
 
+ do i=2,Nx-1
+  do j=1,N_loc
+   Ey(i,j)=Ey(i,j)+dt_eps0*((Hz(i-1,j)-Hz(i,j))*den_ex(i))
+  enddo
+ enddo
+ 
  do j=1,N_loc
 !  PML for bottom Ey, x-direction
   do i=2,npml
@@ -868,7 +874,7 @@ endif
 
 if(myrank == 0.or.myrank == (nprocs)/2.or.myrank == nprocs-1)then
  if( b == 1 .and. a == 1 )then
-  if(n == Nt)then
+  if(n == 100)then
    nn = 30 + myrank
    write(str_n,*) myrank
    
@@ -877,9 +883,9 @@ if(myrank == 0.or.myrank == (nprocs)/2.or.myrank == nprocs-1)then
     write(nn,*) Hz
    close(unit = nn)
    
-   filename = str_Ex//trim(adjustl(str_n))//suffix
+   filename = str_Ey//trim(adjustl(str_n))//suffix
    open(file = trim(adjustl(filename)), unit = nn*4)
-    write(nn*4,*) Ex
+    write(nn*4,*) Ey
    close(unit = nn*4)
    
   endif 
