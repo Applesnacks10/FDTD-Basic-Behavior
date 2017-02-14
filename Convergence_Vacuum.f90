@@ -527,6 +527,8 @@ Ex_send=0.0
 Hz_get=0.0
 Hz_send=0.0
 
+P_sum = 0.0
+
   if(myrank == 0)then
    write(*,*)"res: ", res_array(a)
    write(*,*)"pml_add: ", pml_add(b)
