@@ -614,7 +614,7 @@ if(myrank == (nprocs)/2)then
     Hz(i,j) = Hz(i,j) + pulse(n)
 !   endif
 !   if(x(i) == x_detect .and. y(j) == y_detect)then
-    P_sum = P_sum + (Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0
+    P_sum = P_sum + abs((Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0)
 !   endif
 !  enddo
 ! enddo
@@ -898,7 +898,7 @@ enddo !Nt
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !.:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:.
 
-if(myrank == 0)then
+if(myrank == nprocs/2)then
  write(*,*) "P_sum = ", P_sum
  WRITE(*,*)"done time-stepping"
 endif
