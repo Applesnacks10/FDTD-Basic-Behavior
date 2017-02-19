@@ -2,8 +2,8 @@ program Convergence_Vacuum
 implicit none
 include 'mpif.h'
 
-integer, parameter :: Nr = 6
-integer, parameter, dimension(Nr) :: res_array = (/5,6,7,8,9,10/)
+integer, parameter :: Nr = 1
+integer, parameter, dimension(Nr) :: res_array = (/1/)
 integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
@@ -56,6 +56,7 @@ double precision t
 integer ierr,nprocs,myrank,j_glob,mfdtd,n1
 integer :: istatus(MPI_STATUS_SIZE)
 integer itag,ireq,itag1,itag2,itag3,itag4,itag5,itag6
+integer rank_detect, rank_source
 
 !-------------------------------------------------------------------
 !----------------- Minimum Resolution Variables --------------------
@@ -211,10 +212,11 @@ function Vacuum_CPML() result(P_sum)
 !!  Convergence Detection Zone
 !   integer :: i_start, i_end, & 
 !              j_start, j_end, 
-!   integer ::                                    
-!      isource, jsource
+
    double precision :: sigmaCPML
    double precision :: dt_eps0, dt_mu0
+   
+   integer :: isource, jsource, idetect, jdetect
    
 !
 !~~~ Grid Return ~~~!
@@ -262,7 +264,7 @@ endif
  sigmaCPML=0.8*(m+1)/(dx*(mu0/eps0*eps_delectric)**0.5)
 
 ! isource = (Nx-1)/2 + 1
-! jsource = (Ny-1)/2 + 1
+! jsource = N_loc
 !
 ! i_start = isource
 ! j_start = jsource
@@ -529,7 +531,35 @@ Hz_send=0.0
 
 P_sum = 0.0
 
-  if(myrank == 0)then
+rank_detect = -1
+isource = -1
+jsource = -1
+idetect = -1
+jdetect = -1
+
+ do j = 1,N_loc
+  do i = 1,Nx
+   if(x(i) == x_source .and. y(j) == y_source)then
+    isource = i
+    jsource = j
+    rank_source = myrank
+   endif
+   if(x(i) == x_detect .and. y(j) == y_detect)then
+    idetect = i
+    jdetect = j
+    rank_detect = myrank
+   endif
+  enddo
+ enddo
+
+  if(myrank == rank_source)then
+   write(*,*) "rank_source =", myrank
+  endif
+  if(myrank == rank_detect)then
+   write(*,*) "rank_detect =", myrank
+  endif
+  
+  if(myrank == rank_detect)then
    write(*,*)"res: ", res_array(a)
    write(*,*)"pml_add: ", pml_add(b)
    write(*,*)"begin time-stepping"
@@ -607,22 +637,32 @@ if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
 !~~~ Source and Detection~~~!
 !
 
-if(myrank == (nprocs)/2)then
+!if(myrank == (nprocs)/2)then
 ! do j = 1,N_loc
 !  do i = 1,Nx
 !   if(x(i) == x_source .and. y(j) == y_source)then
-   i = (Nx-1)/2
-   j = N_loc
-    Hz(i,j) = Hz(i,j) + pulse(n)
+!   i = (Nx-1)/2 + 1
+!   j = N_loc
+!    Hz(i,j) = Hz(i,j) + pulse(n)
 !   endif
 !   if(x(i) == x_detect .and. y(j) == y_detect)then
-    P_sum = P_sum + ((Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0)**2
+!    P_sum = P_sum + ((Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0)**2
 !   endif
 !  enddo
 ! enddo
+!endif
+
+if(myrank == rank_source)then
+ i = isource
+ j = jsource
+ Hz(i,j) = Hz(i,j) + pulse(n)
+endif
+if(myrank == rank_detect)then
+ i = idetect
+ j = jdetect
+ P_sum = P_sum + ((Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0)**2
 endif
 
- 
  do j=1,N_loc
 !  PML for left Hz, x-direction
   do i=1,npml-1
@@ -900,7 +940,7 @@ enddo !Nt
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !.:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:.
 
-if(myrank == nprocs/2)then
+if(myrank == rank_detect)then
  write(*,*) "P_sum = ", P_sum
  WRITE(*,*)"done time-stepping"
 endif
