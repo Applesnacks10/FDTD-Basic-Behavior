@@ -2,8 +2,8 @@ program Convergence_Vacuum
 implicit none
 include 'mpif.h'
 
-integer, parameter :: Nr = 1
-integer, parameter, dimension(Nr) :: res_array = (/1/)
+integer, parameter :: Nr = 2
+integer, parameter, dimension(Nr) :: res_array = (/1,2/)
 integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
