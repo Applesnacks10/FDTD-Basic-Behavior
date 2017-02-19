@@ -2,8 +2,8 @@ program Convergence_Vacuum
 implicit none
 include 'mpif.h'
 
-integer, parameter :: Nr = 5
-integer, parameter, dimension(Nr) :: res_array = (/1,2,3,4,5/)
+integer, parameter :: Nr = 6
+integer, parameter, dimension(Nr) :: res_array = (/5,6,7,8,9,10/)
 integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
@@ -94,8 +94,8 @@ integer itag,ireq,itag1,itag2,itag3,itag4,itag5,itag6
 
    INTEGER, parameter :: &
       Nt_max = res_array(Nr)*Nt_min,                  &                
-      Nx_max = res_array(Nr)*(Nx_min-1) + length_add/dx_min + 1,                  &
-      Ny_max = res_array(Nr)*(Ny_min-1) + length_add/dx_min + 1,                  &
+      Nx_max = res_array(Nr)*(Nx_min-1) + 2*length_add/dx_min + 1,                  &
+      Ny_max = res_array(Nr)*(Ny_min-1) + 2*length_add/dx_min + 1,                  &
       N_loc_max = res_array(Nr)*N_loc_min + length_add/dx_min !Interior processors inherit (npml_add) unused y-spaces
 
       
@@ -148,7 +148,7 @@ double precision :: be_y(npml_max), ce_y(npml_max), alphae_y(npml_max), sige_y(n
 
 !denominators for the update equations
 
-double precision :: den_ex(Nx_max-1), den_hx(Nx_max-1)
+double precision :: den_ex(Nx_max), den_hx(Nx_max)
 
 double precision :: den_ey(N_loc_max), den_hy(N_loc_max)
 
@@ -172,11 +172,16 @@ do a = 1,Nr
  
  Rel_error(a) = abs((Convergence(a,2) - Convergence(a,1))/Convergence(a,1))
  
- open(file = 'Relative Errors.dat', position = 'append', unit = 40)
-   write(40,*) res_array(a), Rel_error(a)
- close(unit = 40)
+
+ if(Rel_error(a) /= 0.0)then 
+  open(file = 'Relative Errors.dat', position = 'append', unit = 28)
+    write(28,*) res_array(a), Rel_error(a)
+  close(unit = 28)
+ endif
  
 enddo! Nr resolutions
+
+ call MPI_FINALIZE(ierr)
 
 !-----------------------------------------------------------------------
 !-----------------------------------------------------------------------
@@ -270,12 +275,12 @@ endif
 
 pulse=0.0
 do n=1,Nt
- t=dt*dble(n)
+ t=dt*dble(n-1)
  
- pulse = H0*sin(omega*t)
+ pulse(n) = H0*sin(omega*t)
 
 enddo
- 
+
 !
 !~~~ physical grid ~~~!
 !
@@ -349,6 +354,7 @@ enddo
 ! i_return1 = 1
 ! i_return2 = Nx-1 
 
+ nn = 24
  n_return(1) = Nt/100
  n_return(2) = Nt
 
@@ -521,6 +527,8 @@ Ex_send=0.0
 Hz_get=0.0
 Hz_send=0.0
 
+P_sum = 0.0
+
   if(myrank == 0)then
    write(*,*)"res: ", res_array(a)
    write(*,*)"pml_add: ", pml_add(b)
@@ -599,17 +607,20 @@ if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
 !~~~ Source and Detection~~~!
 !
 
- do j = 1,N_loc
-  do i = 1,Nx
-   if(x(i) == x_source .and. y(j) == y_source)then
+if(myrank == (nprocs)/2)then
+! do j = 1,N_loc
+!  do i = 1,Nx
+!   if(x(i) == x_source .and. y(j) == y_source)then
+   i = (Nx-1)/2
+   j = N_loc
     Hz(i,j) = Hz(i,j) + pulse(n)
-   endif
-   if(x(i) == x_detect .and. y(j) == y_detect)then
-    P_sum = P_sum + (Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0
-   endif
-  enddo
- enddo
- 
+!   endif
+!   if(x(i) == x_detect .and. y(j) == y_detect)then
+    P_sum = P_sum + ((Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0)**2
+!   endif
+!  enddo
+! enddo
+endif
 
  
  do j=1,N_loc
@@ -765,6 +776,12 @@ if((myrank>=0).and.(myrank<(nprocs-1)))then
 !  enddo
 ! enddo
 
+ do i=2,Nx-1
+  do j=1,N_loc
+   Ey(i,j)=Ey(i,j)+dt_eps0*((Hz(i-1,j)-Hz(i,j))*den_ex(i))
+  enddo
+ enddo
+ 
  do j=1,N_loc
 !  PML for bottom Ey, x-direction
   do i=2,npml
@@ -813,56 +830,80 @@ endif
 !~~~~~~~~~~~~~~~~~~~~~~~~==========================~~~~~~~~~~~~~~~~~~~~~~~~!
 !--------------------------------------------------------------------------!
 
-if( b == 1 .and. (a == 1 .or. a == 3))then
-
-if(Nreturn > 0.and.GR)then 
- do k = 1,Nreturn
-  if(k == n_return(a))then
-  
-   nn = 10 + a
-   write(str_n,*) n
-   
-   if(a == 1)then
-    filename = str_Hz//trim(adjustl(str_n))//'a=1'//suffix
-   elseif(a == 3)then
-    filename = str_Hz//trim(adjustl(str_n))//'a=3'//suffix
-   endif
-   
-   !filename = prefix//filename
-   open(file=trim(adjustl(filename)),position = 'append',unit=k+nn)
-    do j = j_return1,j_return2
-     write(k+nn,*) Hz(i_return1:i_return2,j)
-    enddo
-   close(unit=k+nn)
-  
-   
-   write(str_n,*) n
-   
-   if(a == 1)then
-    filename = str_Ex//trim(adjustl(str_n))//'a=1'//suffix
-   elseif(a == 3)then
-    filename = str_Ex//trim(adjustl(str_n))//'a=3'//suffix
-   endif
-   
-   !filename = prefix//filename
-   open(file=trim(adjustl(filename)),position = 'append',unit=k+nn*2)
-    do j = j_return1,j_return2
-     write(k+nn*2,*) Ex(i_return1:i_return2,j)
-    enddo
-   close(unit=k+nn*2) 
-
-  endif
- enddo
-endif
-
-endif !GR
+!if( b == 1 .and. (a == 1 .or. a == 3))then
+!
+!if(Nreturn > 0.and.GR)then
+! do k = 1,Nreturn 
+!  if(n == n_return(k))then
+!  
+!   nn = nn + 1
+!   write(str_n,*) n
+!   
+!   if(a == 1)then
+!    filename = str_Hz//trim(adjustl(str_n))//'a=1'//suffix
+!   elseif(a == 3)then
+!    filename = str_Hz//trim(adjustl(str_n))//'a=3'//suffix
+!   endif
+!   
+!   !filename = prefix//filename
+!   open(file=trim(adjustl(filename)),position = 'append',unit=nn)
+!    do j = j_return1,j_return2
+!     write(nn,*) Hz(i_return1:i_return2,j)
+!    enddo
+!   close(unit=nn)
+!  
+!   
+!   write(str_n,*) n
+!   
+!   if(a == 1)then
+!    filename = str_Ex//trim(adjustl(str_n))//'a=1'//suffix
+!   elseif(a == 3)then
+!    filename = str_Ex//trim(adjustl(str_n))//'a=3'//suffix
+!   endif
+!   
+!   !filename = prefix//filename
+!   open(file=trim(adjustl(filename)),position = 'append',unit=nn*3)
+!    do j = j_return1,j_return2
+!     write(nn*3,*) Ex(i_return1:i_return2,j)
+!    enddo
+!   close(unit=nn*3) 
+!
+!  endif
+! enddo
+!endif
+!
+!endif !GR
+!
+!if(myrank == 0.or.myrank == (nprocs)/2.or.myrank == nprocs-1)then
+! if( b == 1 .and. a == 1 )then
+!  if(n == Nt)then
+!   nn = 30 + myrank
+!   write(str_n,*) myrank
+!   
+!   filename = str_Hz//trim(adjustl(str_n))//suffix
+!   open(file = trim(adjustl(filename)), unit = nn)
+!    write(nn,*) Hz
+!   close(unit = nn)
+!   
+!   filename = str_Ey//trim(adjustl(str_n))//suffix
+!   open(file = trim(adjustl(filename)), unit = nn*4)
+!    write(nn*4,*) Ey
+!   close(unit = nn*4)
+!   
+!  endif 
+! endif
+!endif !GR
 
 enddo !Nt
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !  END TIME STEP
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !.:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:.
-    WRITE(*,*)"done time-stepping"
+
+if(myrank == nprocs/2)then
+ write(*,*) "P_sum = ", P_sum
+ WRITE(*,*)"done time-stepping"
+endif
     
 end function Vacuum_CPML
 
