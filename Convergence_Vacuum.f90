@@ -205,7 +205,7 @@ function Vacuum_CPML() result(P_sum)
 
    integer :: Nt, Nx, Ny, N_loc
    
-   integer :: npml
+   integer :: npml, npml_add
    
 !!  ..................................
 !!  Convergence Detection Zone
@@ -238,26 +238,28 @@ logical GR
  dx = dx_max/res_array(a)
  dy = dy_max/res_array(a)
  
- x0 = x0_min - pml_add(b)*length_add/dx
- xM = xM_min + pml_add(b)*length_add/dx
+ npml_add = pml_add(b)*length_add/dx
  
- y0 = y0_min - pml_add(b)*length_add/dx
- yM = yM_min + pml_add(b)*length_add/dx
+ x0 = x0_min - npml_add
+ xM = xM_min + npml_add
+ 
+ y0 = y0_min - npml_add
+ yM = yM_min + npml_add
  
  dt = dx/(2.0*c)
  
  dt_eps0 = dt/eps0
  dt_mu0 = dt/mu0
 
- npml = res_array(a)*(npml_min-1) + pml_add(b)*length_add/dx + 1
+ npml = res_array(a)*(npml_min-1) + npml_add + 1
  
  Nt = res_array(a)*Nt_min
- Nx = res_array(a)*(Nx_min-1) + 2*pml_add(b)*length_add/dx + 1
- Ny = res_array(a)*(Ny_min-1) + 2*pml_add(b)*length_add/dy + 1
+ Nx = res_array(a)*(Nx_min-1) + 2*npml_add + 1
+ Ny = res_array(a)*(Ny_min-1) + 2*npml_add + 1
  N_loc = res_array(a)*(N_loc_min)
 
 if(myrank == 0 .or. myrank == nprocs-1)then !PML Processors take on all of the extra load since npml_add < nprocs
- N_loc = res_array(a)*N_loc_min + pml_add(b)*length_add/dx
+ N_loc = res_array(a)*N_loc_min + npml_add
 endif
  
  sigmaCPML=0.8*(m+1)/(dx*(mu0/eps0*eps_delectric)**0.5)
@@ -301,11 +303,11 @@ do j=1,N_loc
  endif
 
  if(myrank > 0 .and. myrank < nprocs-1)then
-  j_glob=myrank*N_loc + pml_add(b)*length_add/dx + j
+  j_glob=myrank*N_loc + npml_add + j
  endif
 
  if(myrank == nprocs-1)then
-  j_glob = myrank*(N_loc - pml_add(b)*length_add/dx) + pml_add(b)*length_add/dx + j
+  j_glob = myrank*(N_loc - npml_add) + npml_add + j
  endif
 
  y(j)=y0+dy*(j_glob-1)
@@ -560,10 +562,15 @@ jdetect = -1
   endif
   
   if(myrank == rank_detect)then
-   write(*,*)"res: ", res_array(a)
-   write(*,*)"pml_add: ", pml_add(b)
+   write(*,*)"res:", res_array(a)
+   write(*,*)"pml_add:", pml_add(b)
    write(*,*)"begin time-stepping"
   endif
+  
+  if(myrank == 0)then
+   write(*,*)"check -- res:", res_array(a)
+   write(*,*)"check -- pml_add:", pml_add(b)
+   write(*,*)"check -- npml_add:", npml_add
 
 do n=1,Nt
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
