@@ -61,8 +61,8 @@ integer itag,ireq,itag1,itag2,itag3,itag4,itag5,itag6
 !----------------- Minimum Resolution Variables --------------------
 !-------------------------------------------------------------------
 
- double precision, parameter :: y0_min = -100E-9, yM_min = 100E-9
- double precision, parameter :: x0_min = -320E-9, xM_min = 320E-9
+ double precision, parameter :: x0_min = -100E-9, xM_min = 100E-9
+ double precision, parameter :: y0_min = -320E-9, yM_min = 320E-9
 
  double precision, parameter ::	               &
       dx_max = 1.0E-9 , dy_max = dx_max 
@@ -83,9 +83,9 @@ integer itag,ireq,itag1,itag2,itag3,itag4,itag5,itag6
 !----------------- Maximum Resolution Variables --------------------
 !-------------------------------------------------------------------
 
- double precision, parameter :: y0_max = y0_min - length_add, yM_max = yM_min + length_add
- double precision, parameter :: x0_max = x0_min - length_add, xM_max = xM_min + length_add 
-      
+ double precision, parameter :: x0_max = x0_min - length_add, xM_max = xM_min + length_add
+ double precision, parameter :: y0_max = y0_min - length_add, yM_max = yM_min + length_add 
+ 
   double precision, parameter :: &
       dx_min = (dx_max)/res_array(Nr), dy_min =(dy_max)/res_array(Nr)
             
