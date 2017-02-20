@@ -2,8 +2,8 @@ program Convergence_Vacuum
 implicit none
 include 'mpif.h'
 
-integer, parameter :: Nr = 5
-integer, parameter, dimension(Nr) :: res_array = (/1,2,3,4,5/)
+integer, parameter :: Nr = 10
+integer, parameter, dimension(Nr) :: res_array = (/1,2,3,4,5,6,7,8,9,10/)
 integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
@@ -170,7 +170,7 @@ do a = 1,Nr
   
  enddo! 2 cpml lengths
  
- Rel_error(a) = abs((Convergence(a,2) - Convergence(a,1))/Convergence(a,1))
+ Rel_error(a) = ((Convergence(a,2) - Convergence(a,1))/Convergence(a,1))**2
  
 
  if(Rel_error(a) /= 0.0)then 
@@ -616,7 +616,7 @@ if(myrank == nprocs/2-1)then
     Hz(i,j) = Hz(i,j) + pulse(n)
 !   endif
 !   if(x(i) == x_detect .and. y(j) == y_detect)then
-    P_sum = P_sum + ((Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0)**2
+    P_sum = P_sum + abs((Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0)
 !   endif
 !  enddo
 ! enddo
