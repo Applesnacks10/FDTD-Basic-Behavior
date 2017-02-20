@@ -534,6 +534,7 @@ P_sum = 0.0
   if(myrank == nprocs/2-1)then
    write(*,*)"res: ", res_array(a)
    write(*,*)"pml_add: ", pml_add(b)
+  endif
   
 !  if(myrank == 0)then
 !   write(*,*)"check -- res:", res_array(a)
@@ -617,8 +618,8 @@ if(myrank == nprocs/2-1)then
 ! do j = 1,N_loc
 !  do i = 1,Nx
 !   if(x(i) == x_source .and. y(j) == y_source)then
-   i = (Nx-1)/2 - 1
-   j = N_loc
+    i = (Nx-1)/2 - 1
+    j = N_loc
     Hz(i,j) = Hz(i,j) + pulse(n)
 !   endif
 !   if(x(i) == x_detect .and. y(j) == y_detect)then
@@ -626,7 +627,7 @@ if(myrank == nprocs/2-1)then
 !   endif
 !  enddo
 ! enddo
-!endif
+endif
 
  do j=1,N_loc
 !  PML for left Hz, x-direction
