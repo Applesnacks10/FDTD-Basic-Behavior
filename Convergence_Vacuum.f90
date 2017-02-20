@@ -62,9 +62,8 @@ integer rank_detect, rank_source
 !----------------- Minimum Resolution Variables --------------------
 !-------------------------------------------------------------------
 
- double precision, parameter :: y0_min = -100E-9, yM_min = 100E-9
- double precision, parameter :: x0_min = -320E-9, xM_min = 320E-9
-
+ double precision, parameter :: x0_min = -100E-9, xM_min = 100E-9
+ double precision, parameter :: y0_min = -320E-9, yM_min = 320E-9
  double precision, parameter ::	               &
       dx_max = 1.0E-9 , dy_max = dx_max 
             
@@ -540,12 +539,12 @@ jdetect = -1
 
  do j = 1,N_loc
   do i = 1,Nx
-   if(abs(x(i) - x_source) < dx/3.0 .and. abs(y(j) - y_source) < dy/3.0)then
+   if(abs(x(i) - x_source) < dx/10.0 .and. abs(y(j) - y_source) < dy/10.0)then
     isource = i
     jsource = j
     rank_source = myrank
    endif
-   if(abs(x(i) - x_source) < dx/3.0 .and. abs(y(j) - y_detect) < dy/3.0)then
+   if(abs(x(i) - x_detect) < dx/10.0 .and. abs(y(j) - y_detect) < dy/10.0)then
     idetect = i
     jdetect = j
     rank_detect = myrank
