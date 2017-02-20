@@ -923,7 +923,7 @@ endif
 !
 if(myrank == rank_source)then
  if( b == 0 .and. a == 1 )then
-  if(n == Nt/100)then
+  if(n == Nt)then
    nn = 30 + myrank
    write(str_n,*) myrank
    
