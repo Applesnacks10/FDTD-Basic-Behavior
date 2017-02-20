@@ -226,7 +226,6 @@ integer, parameter :: Nreturn = 2
 integer n_return(Nreturn)
 integer i_return1, i_return2, j_return1, j_return2
 logical GR
- character(len = 9), parameter :: prefix = 'Snapshot-'
  character(len = 4), parameter :: suffix = '.dat'
  character(len = 2), parameter :: str_Ex = 'Ex', str_Hz = 'Hz', str_Ey = 'Ey'
  character(len = 50) filename, str_n
@@ -567,11 +566,11 @@ jdetect = -1
    write(*,*)"begin time-stepping"
   endif
   
-  if(myrank == 0)then
-   write(*,*)"check -- res:", res_array(a)
-   write(*,*)"check -- pml_add:", pml_add(b)
-   write(*,*)"check -- npml_add:", npml_add
-  endif
+!  if(myrank == 0)then
+!   write(*,*)"check -- res:", res_array(a)
+!   write(*,*)"check -- pml_add:", pml_add(b)
+!   write(*,*)"check -- npml_add:", npml_add
+!  endif
 
 do n=1,Nt
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
@@ -922,25 +921,25 @@ endif
 !
 !endif !GR
 !
-!if(myrank == 0.or.myrank == (nprocs)/2.or.myrank == nprocs-1)then
-! if( b == 1 .and. a == 1 )then
-!  if(n == Nt)then
-!   nn = 30 + myrank
-!   write(str_n,*) myrank
-!   
-!   filename = str_Hz//trim(adjustl(str_n))//suffix
-!   open(file = trim(adjustl(filename)), unit = nn)
-!    write(nn,*) Hz
-!   close(unit = nn)
-!   
-!   filename = str_Ey//trim(adjustl(str_n))//suffix
-!   open(file = trim(adjustl(filename)), unit = nn*4)
-!    write(nn*4,*) Ey
-!   close(unit = nn*4)
-!   
-!  endif 
-! endif
-!endif !GR
+if(myrank == rank_source)then
+ if( b == 0 .and. a == 1 )then
+  if(n == Nt/100)then
+   nn = 30 + myrank
+   write(str_n,*) myrank
+   
+   filename = str_Hz//trim(adjustl(str_n))//suffix
+   open(file = trim(adjustl(filename)), unit = nn)
+    write(nn,*) Hz
+   close(unit = nn)
+   
+   filename = str_Ey//trim(adjustl(str_n))//suffix
+   open(file = trim(adjustl(filename)), unit = nn*4)
+    write(nn*4,*) Ey
+   close(unit = nn*4)
+   
+  endif 
+ endif
+endif !GR
 
 enddo !Nt
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
