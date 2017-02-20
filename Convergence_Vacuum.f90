@@ -529,7 +529,7 @@ Hz_send=0.0
 
 P_sum = 0.0
 
-  if(myrank == 0)then
+  if(myrank == nprocs/2-1)then
    write(*,*)"res: ", res_array(a)
    write(*,*)"pml_add: ", pml_add(b)
    write(*,*)"begin time-stepping"
@@ -611,7 +611,7 @@ if(myrank == nprocs/2-1)then
 ! do j = 1,N_loc
 !  do i = 1,Nx
 !   if(x(i) == x_source .and. y(j) == y_source)then
-   i = (Nx-1)/2
+   i = (Nx-1)/2 - 1
    j = N_loc
     Hz(i,j) = Hz(i,j) + pulse(n)
 !   endif
