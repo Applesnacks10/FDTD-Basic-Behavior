@@ -2,8 +2,13 @@ program Convergence_Vacuum
 implicit none
 include 'mpif.h'
 
+<<<<<<< HEAD
 integer, parameter :: Nr = 2
 integer, parameter, dimension(Nr) :: res_array = (/1,2/)
+=======
+integer, parameter :: Nr = 10
+integer, parameter, dimension(Nr) :: res_array = (/1,2,3,4,5,6,7,8,9,10/)
+>>>>>>> refs/remotes/origin/Convergence-Vacuum
 integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
@@ -12,7 +17,7 @@ integer :: a,b !loop variables
 !------------------------ Global Parameters ------------------------
 !-------------------------------------------------------------------
 
-double precision, parameter :: length_add = 9.0E-9 
+double precision, parameter :: length_add = 9.0E-8 
 !
 !~~~ fundamental constants [all numbers are in SI units]~~~!
 !
@@ -62,10 +67,16 @@ integer rank_detect, rank_source
 !----------------- Minimum Resolution Variables --------------------
 !-------------------------------------------------------------------
 
+<<<<<<< HEAD
  double precision, parameter :: x0_min = -100E-9, xM_min = 100E-9
  double precision, parameter :: y0_min = -320E-9, yM_min = 320E-9
+=======
+ double precision, parameter :: x0_min = -100E-8, xM_min = 100E-8
+ double precision, parameter :: y0_min = -320E-8, yM_min = 320E-8
+
+>>>>>>> refs/remotes/origin/Convergence-Vacuum
  double precision, parameter ::	               &
-      dx_max = 1.0E-9 , dy_max = dx_max 
+      dx_max = 1.0E-8 , dy_max = dx_max 
             
  double precision, parameter ::                &
       dt_max = dx_max/(2.0*c)
@@ -83,9 +94,9 @@ integer rank_detect, rank_source
 !----------------- Maximum Resolution Variables --------------------
 !-------------------------------------------------------------------
 
- double precision, parameter :: y0_max = y0_min - length_add, yM_max = yM_min + length_add
- double precision, parameter :: x0_max = x0_min - length_add, xM_max = xM_min + length_add 
-      
+ double precision, parameter :: x0_max = x0_min - length_add, xM_max = xM_min + length_add
+ double precision, parameter :: y0_max = y0_min - length_add, yM_max = yM_min + length_add 
+ 
   double precision, parameter :: &
       dx_min = (dx_max)/res_array(Nr), dy_min =(dy_max)/res_array(Nr)
             
@@ -170,7 +181,7 @@ do a = 1,Nr
   
  enddo! 2 cpml lengths
  
- Rel_error(a) = abs((Convergence(a,2) - Convergence(a,1))/Convergence(a,1))
+ Rel_error(a) = ((Convergence(a,2) - Convergence(a,1))/Convergence(a,1))**2
  
 
  if(Rel_error(a) /= 0.0)then 
@@ -531,6 +542,7 @@ Hz_send=0.0
 
 P_sum = 0.0
 
+<<<<<<< HEAD
 rank_detect = -1
 rank_source = -1
 isource = -1
@@ -563,6 +575,11 @@ jdetect = -1
   if(myrank == rank_detect)then
    write(*,*)"res:", res_array(a)
    write(*,*)"pml_add:", pml_add(b)
+=======
+  if(myrank == nprocs/2-1)then
+   write(*,*)"res: ", res_array(a)
+   write(*,*)"pml_add: ", pml_add(b)
+>>>>>>> refs/remotes/origin/Convergence-Vacuum
    write(*,*)"begin time-stepping"
   endif
   
@@ -644,6 +661,7 @@ if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
 !~~~ Source and Detection~~~!
 !
 
+<<<<<<< HEAD
 !if(myrank == (nprocs)/2)then
 ! do j = 1,N_loc
 !  do i = 1,Nx
@@ -654,6 +672,18 @@ if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
 !   endif
 !   if(x(i) == x_detect .and. y(j) == y_detect)then
 !    P_sum = P_sum + ((Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0)**2
+=======
+if(myrank == nprocs/2-1)then
+! do j = 1,N_loc
+!  do i = 1,Nx
+!   if(x(i) == x_source .and. y(j) == y_source)then
+   i = (Nx-1)/2 - 1
+   j = N_loc
+    Hz(i,j) = Hz(i,j) + pulse(n)
+!   endif
+!   if(x(i) == x_detect .and. y(j) == y_detect)then
+    P_sum = P_sum + abs((Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0)
+>>>>>>> refs/remotes/origin/Convergence-Vacuum
 !   endif
 !  enddo
 ! enddo
@@ -947,7 +977,11 @@ enddo !Nt
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !.:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:.
 
+<<<<<<< HEAD
 if(myrank == rank_detect)then
+=======
+if(myrank == nprocs/2-1)then
+>>>>>>> refs/remotes/origin/Convergence-Vacuum
  write(*,*) "P_sum = ", P_sum
  WRITE(*,*)"done time-stepping"
 endif
