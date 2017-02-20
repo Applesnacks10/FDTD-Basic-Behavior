@@ -607,7 +607,7 @@ if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
 !~~~ Source and Detection~~~!
 !
 
-if(myrank == (nprocs)/2)then
+if(myrank == nprocs/2-1)then
 ! do j = 1,N_loc
 !  do i = 1,Nx
 !   if(x(i) == x_source .and. y(j) == y_source)then
@@ -900,7 +900,7 @@ enddo !Nt
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !.:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:.
 
-if(myrank == nprocs/2)then
+if(myrank == nprocs/2-1)then
  write(*,*) "P_sum = ", P_sum
  WRITE(*,*)"done time-stepping"
 endif
