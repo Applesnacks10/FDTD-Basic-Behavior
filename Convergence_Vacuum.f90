@@ -12,7 +12,7 @@ integer :: a,b !loop variables
 !------------------------ Global Parameters ------------------------
 !-------------------------------------------------------------------
 
-double precision, parameter :: length_add = 9.0E-9 
+double precision, parameter :: length_add = 9.0E-8 
 !
 !~~~ fundamental constants [all numbers are in SI units]~~~!
 !
@@ -61,11 +61,11 @@ integer itag,ireq,itag1,itag2,itag3,itag4,itag5,itag6
 !----------------- Minimum Resolution Variables --------------------
 !-------------------------------------------------------------------
 
- double precision, parameter :: x0_min = -100E-9, xM_min = 100E-9
- double precision, parameter :: y0_min = -320E-9, yM_min = 320E-9
+ double precision, parameter :: x0_min = -100E-8, xM_min = 100E-8
+ double precision, parameter :: y0_min = -320E-8, yM_min = 320E-8
 
  double precision, parameter ::	               &
-      dx_max = 1.0E-9 , dy_max = dx_max 
+      dx_max = 1.0E-8 , dy_max = dx_max 
             
  double precision, parameter ::                &
       dt_max = dx_max/(2.0*c)
