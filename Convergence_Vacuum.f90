@@ -2,13 +2,8 @@ program Convergence_Vacuum
 implicit none
 include 'mpif.h'
 
-<<<<<<< HEAD
-integer, parameter :: Nr = 2
-integer, parameter, dimension(Nr) :: res_array = (/1,2/)
-=======
 integer, parameter :: Nr = 10
 integer, parameter, dimension(Nr) :: res_array = (/1,2,3,4,5,6,7,8,9,10/)
->>>>>>> refs/remotes/origin/Convergence-Vacuum
 integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
@@ -61,20 +56,14 @@ double precision t
 integer ierr,nprocs,myrank,j_glob,mfdtd,n1
 integer :: istatus(MPI_STATUS_SIZE)
 integer itag,ireq,itag1,itag2,itag3,itag4,itag5,itag6
-integer rank_detect, rank_source
 
 !-------------------------------------------------------------------
 !----------------- Minimum Resolution Variables --------------------
 !-------------------------------------------------------------------
 
-<<<<<<< HEAD
- double precision, parameter :: x0_min = -100E-9, xM_min = 100E-9
- double precision, parameter :: y0_min = -320E-9, yM_min = 320E-9
-=======
  double precision, parameter :: x0_min = -100E-8, xM_min = 100E-8
  double precision, parameter :: y0_min = -320E-8, yM_min = 320E-8
 
->>>>>>> refs/remotes/origin/Convergence-Vacuum
  double precision, parameter ::	               &
       dx_max = 1.0E-8 , dy_max = dx_max 
             
@@ -542,46 +531,9 @@ Hz_send=0.0
 
 P_sum = 0.0
 
-<<<<<<< HEAD
-rank_detect = -1
-rank_source = -1
-isource = -1
-jsource = -1
-idetect = -1
-jdetect = -1
-
- do j = 1,N_loc
-  do i = 1,Nx
-   if(abs(x(i) - x_source) < dx/10.0 .and. abs(y(j) - y_source) < dy/10.0)then
-    isource = i
-    jsource = j
-    rank_source = myrank
-   endif
-   if(abs(x(i) - x_detect) < dx/10.0 .and. abs(y(j) - y_detect) < dy/10.0)then
-    idetect = i
-    jdetect = j
-    rank_detect = myrank
-   endif
-  enddo
- enddo
-
-  if(myrank == rank_source)then
-   write(*,*) "rank_source =", myrank
-  endif
-  if(myrank == rank_detect)then
-   write(*,*) "rank_detect =", myrank
-  endif
-  
-  if(myrank == rank_detect)then
-   write(*,*)"res:", res_array(a)
-   write(*,*)"pml_add:", pml_add(b)
-=======
   if(myrank == nprocs/2-1)then
    write(*,*)"res: ", res_array(a)
    write(*,*)"pml_add: ", pml_add(b)
->>>>>>> refs/remotes/origin/Convergence-Vacuum
-   write(*,*)"begin time-stepping"
-  endif
   
 !  if(myrank == 0)then
 !   write(*,*)"check -- res:", res_array(a)
@@ -661,18 +613,6 @@ if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
 !~~~ Source and Detection~~~!
 !
 
-<<<<<<< HEAD
-!if(myrank == (nprocs)/2)then
-! do j = 1,N_loc
-!  do i = 1,Nx
-!   if(x(i) == x_source .and. y(j) == y_source)then
-!   i = (Nx-1)/2 + 1
-!   j = N_loc
-!    Hz(i,j) = Hz(i,j) + pulse(n)
-!   endif
-!   if(x(i) == x_detect .and. y(j) == y_detect)then
-!    P_sum = P_sum + ((Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0)**2
-=======
 if(myrank == nprocs/2-1)then
 ! do j = 1,N_loc
 !  do i = 1,Nx
@@ -683,22 +623,10 @@ if(myrank == nprocs/2-1)then
 !   endif
 !   if(x(i) == x_detect .and. y(j) == y_detect)then
     P_sum = P_sum + abs((Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0)
->>>>>>> refs/remotes/origin/Convergence-Vacuum
 !   endif
 !  enddo
 ! enddo
 !endif
-
-if(myrank == rank_source)then
- i = isource
- j = jsource
- Hz(i,j) = Hz(i,j) + pulse(n)
-endif
-if(myrank == rank_detect)then
- i = idetect
- j = jdetect
- P_sum = P_sum + ((Hz(i,j) + Hz(i-1,j) + Hz(i,j-1) + Hz(i-1,j-1) )/4.0)**2
-endif
 
  do j=1,N_loc
 !  PML for left Hz, x-direction
@@ -951,25 +879,25 @@ endif
 !
 !endif !GR
 !
-if(myrank == rank_source)then
- if( b == 0 .and. a == 1 )then
-  if(n == Nt)then
-   nn = 30 + myrank
-   write(str_n,*) myrank
-   
-   filename = str_Hz//trim(adjustl(str_n))//suffix
-   open(file = trim(adjustl(filename)), unit = nn)
-    write(nn,*) Hz
-   close(unit = nn)
-   
-   filename = str_Ey//trim(adjustl(str_n))//suffix
-   open(file = trim(adjustl(filename)), unit = nn*4)
-    write(nn*4,*) Ey
-   close(unit = nn*4)
-   
-  endif 
- endif
-endif !GR
+!if(myrank == nprocs/2-1)then
+! if( b == 0 .and. a == 1 )then
+!  if(n == Nt)then
+!   nn = 30 + myrank
+!   write(str_n,*) myrank
+!   
+!   filename = str_Hz//trim(adjustl(str_n))//suffix
+!   open(file = trim(adjustl(filename)), unit = nn)
+!    write(nn,*) Hz
+!   close(unit = nn)
+!   
+!   filename = str_Ey//trim(adjustl(str_n))//suffix
+!   open(file = trim(adjustl(filename)), unit = nn*4)
+!    write(nn*4,*) Ey
+!   close(unit = nn*4)
+!   
+!  endif 
+! endif
+!endif !GR
 
 enddo !Nt
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -977,11 +905,7 @@ enddo !Nt
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !.:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:. .:.
 
-<<<<<<< HEAD
-if(myrank == rank_detect)then
-=======
 if(myrank == nprocs/2-1)then
->>>>>>> refs/remotes/origin/Convergence-Vacuum
  write(*,*) "P_sum = ", P_sum
  WRITE(*,*)"done time-stepping"
 endif
