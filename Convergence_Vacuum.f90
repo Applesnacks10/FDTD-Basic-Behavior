@@ -571,6 +571,7 @@ jdetect = -1
    write(*,*)"check -- res:", res_array(a)
    write(*,*)"check -- pml_add:", pml_add(b)
    write(*,*)"check -- npml_add:", npml_add
+  endif
 
 do n=1,Nt
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::!
