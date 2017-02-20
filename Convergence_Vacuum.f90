@@ -532,6 +532,7 @@ Hz_send=0.0
 P_sum = 0.0
 
 rank_detect = -1
+rank_source = -1
 isource = -1
 jsource = -1
 idetect = -1
@@ -539,12 +540,12 @@ jdetect = -1
 
  do j = 1,N_loc
   do i = 1,Nx
-   if(x(i) == x_source .and. y(j) == y_source)then
+   if(abs(x(i) - x_source) < dx/3.0 .and. abs(y(j) - y_source) < dy/3.0)then
     isource = i
     jsource = j
     rank_source = myrank
    endif
-   if(x(i) == x_detect .and. y(j) == y_detect)then
+   if(abs(x(i) - x_source) < dx/3.0 .and. abs(y(j) - y_detect) < dy/3.0)then
     idetect = i
     jdetect = j
     rank_detect = myrank
