@@ -124,7 +124,7 @@ double precision :: pulse(Nt_max)
 
 double precision :: PDx(Nx_max-1,N_loc_max), PDy(Nx_max-1,N_loc_max)
 logical :: FBx(Nx_max-1,N_loc_max), FBy(Nx_max,N_loc_max)
-double precision :: Drude_return_x(Nx_min-1,N_loc_min), Drude_return_y(Nx_min, N_loc_min)
+integer :: Drude_return_x(Nx_min-1,N_loc_min), Drude_return_y(Nx_min, N_loc_min)
 
 !PML
 
