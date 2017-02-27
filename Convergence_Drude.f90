@@ -2,8 +2,8 @@ program Convergence_Drude
 implicit none
 include 'mpif.h'
 
-integer, parameter :: Nr = 2
-integer, parameter, dimension(Nr) :: res_array = (/1,2/)
+integer, parameter :: Nr = 1
+integer, parameter, dimension(Nr) :: res_array = (/1/)
 integer, parameter, dimension(2) :: pml_add = (/0,1/)
 double precision :: Convergence(Nr,2), Rel_error(Nr)
 integer :: a,b !loop variables
@@ -124,6 +124,7 @@ double precision :: pulse(Nt_max)
 
 double precision :: PDx(Nx_max-1,N_loc_max), PDy(Nx_max-1,N_loc_max)
 logical :: FBx(Nx_max-1,N_loc_max), FBy(Nx_max,N_loc_max)
+double precision :: Drude_return_x(Nx_min-1,N_loc_min), Drude_return_y(Nx_min, N_loc_min)
 
 !PML
 
@@ -918,31 +919,32 @@ if(myrank == nprocs/2-1)then
    nn = 30 + myrank
    write(str_n,*) myrank
    
-!   do j = 1:N_loc
-!    do i = 1:Nx
-!     if(FBy(i,j))then
-!      Drude_return(i,j) = 1
-!     else
-!      Drude_return(i,j) = 0
-!     endif
-!    enddo
-!    
-!    do i = 1:Nx-1
-!     if(FBx(i,j))then
-!      Drude_return(i,j) = 1
-!     else
-!      Drude_return(i,j) = 0 
-!    enddo
-!   enddo
+   do j = 1,N_loc
+    do i = 1,Nx
+     if(FBy(i,j))then
+      Drude_return_y(i,j) = 1
+     else
+      Drude_return_y(i,j) = 0
+     endif
+    enddo
+    
+    do i = 1,Nx-1
+     if(FBx(i,j))then
+      Drude_return_x(i,j) = 1
+     else
+      Drude_return_x(i,j) = 0 
+     endif
+    enddo
+   enddo
    
    filename = str_Drude_y//suffix
    open(file = trim(adjustl(filename)), unit = nn)
-    write(nn,*) FBy
+    write(nn,*) Drude_return_y
    close(unit = nn)
    
    filename = str_Drude_x//suffix
    open(file = trim(adjustl(filename)), unit = nn*4)
-    write(nn*4,*) FBx
+    write(nn*4,*) Drude_return_x
    close(unit = nn*4)
 
   endif 
