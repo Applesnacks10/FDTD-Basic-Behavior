@@ -894,7 +894,7 @@ endif
 !endif !GR
 !
 !if(myrank == nprocs/2-1)then
-! if( b == 0 .and. a == 1 )then
+! if( b == 1 .and. a == 1 )then
 !  if(n == Nt)then
 !   nn = 30 + myrank
 !   write(str_n,*) myrank
@@ -914,7 +914,7 @@ endif
 !endif !GR
 
 if(myrank == nprocs/2-1)then
- if( b == 0 .and. a == 1 )then
+ if( b == 1 .and. a == 1 )then
   if(n == Nt)then
    nn = 30 + myrank
    write(str_n,*) myrank
