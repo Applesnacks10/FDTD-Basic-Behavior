@@ -83,9 +83,9 @@ double precision psi_Hzy_2_inc(npml-1),psi_Exy_2_inc(npml)
 !
 double precision, parameter :: eps_r=8.926,omegaD=ev_to_radsec*11.585,GammaD=ev_to_radsec*0.203
 double precision, parameter :: A1=(2.0-GammaD*dt)/(2.0+GammaD*dt),A2=eps0*omegaD*omegaD*dt/(2.0+GammaD*dt)
-double precision, parameter :: C1=(eps_r*eps0/dt-0.5*A2)/(eps_r*eps0/dt+0.5*A2)
-double precision, parameter :: C3=1.0/(eps_r*eps0/dt+0.5*A2)
-double precision, parameter :: C4=0.5*(A1+1.0)/(eps_r*eps0/dt+0.5*A2)
+double precision, parameter :: Ca=(eps_r*eps0/dt-0.5*A2)/(eps_r*eps0/dt+0.5*A2)
+double precision, parameter :: Cb=1.0/(eps_r*eps0/dt+0.5*A2)
+double precision, parameter :: Cc=0.5*(A1+1.0)/(eps_r*eps0/dt+0.5*A2)
 
 double precision tmpE
 
@@ -588,7 +588,7 @@ if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
  do i=1,Nx-1
   j=1
    if(FBx(i,j))then
-     tmpE=C1*Ex(i,j)+C3*(Hz(i,j)-Hz_get(i))*den_ey(j)-C4*PDx(i,j)
+     tmpE=Ca*Ex(i,j)+Cb*(Hz(i,j)-Hz_get(i))*den_ey(j)-Cc*PDx(i,j)
      PDx(i,j)=A1*PDx(i,j)+A2*(tmpE+Ex(i,j))
      Ex(i,j)=tmpE
     else
@@ -597,7 +597,7 @@ if((myrank>0).and.(myrank<(nprocs-1)))then !no PML for y-direction here
   
   do j=2,N_loc
    if(FBx(i,j))then
-     tmpE=C1*Ex(i,j)+C3*(Hz(i,j)-Hz(i,j-1))*den_ey(j)-C4*PDx(i,j)
+     tmpE=Ca*Ex(i,j)+Cb*(Hz(i,j)-Hz(i,j-1))*den_ey(j)-Cc*PDx(i,j)
      PDx(i,j)=A1*PDx(i,j)+A2*(tmpE+Ex(i,j))
      Ex(i,j)=tmpE
     else
@@ -681,7 +681,7 @@ if((myrank>=0).and.(myrank<(nprocs-1)))then
  do i=2,Nx-1
   do j=1,N_loc
    if(FBy(i,j))then
-     tmpE=C1*Ey(i,j)+C3*(Hz(i-1,j)-Hz(i,j))*den_ex(i)-C4*PDy(i,j)
+     tmpE=Ca*Ey(i,j)+Cb*(Hz(i-1,j)-Hz(i,j))*den_ex(i)-Cc*PDy(i,j)
      PDy(i,j)=A1*PDy(i,j)+A2*(tmpE+Ey(i,j))
      Ey(i,j)=tmpE
 	else
