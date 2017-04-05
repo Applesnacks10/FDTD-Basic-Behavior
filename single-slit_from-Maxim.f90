@@ -694,7 +694,8 @@ if((myrank>=0).and.(myrank<(nprocs-1)))then
 !  PML for bottom Ey, x-direction
   do i=2,npml
    psi_Eyx_1(i,j)=be_x(i)*psi_Eyx_1(i,j)+ce_x(i)*(Hz(i-1,j)-Hz(i,j))/dx
-   Ey(i,j) = Ey(i,j) + dt_eps0*psi_Eyx_1(i,j)
+   Ey(i,j) = Ey(i,j) + Cb*psi_Eyx_1(i,j)
+   PDy(i,j) = PDy(i,j) + A2*(Cb*psi_Eyx_1(i,j))
   enddo
 !  PML for top Ey, x-direction
  ii=npml
